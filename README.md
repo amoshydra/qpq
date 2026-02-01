@@ -4,13 +4,11 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 
 ## Features
 
-- **Menu Mode**: Two sections - Favorites (pinned) and All Commands
+- **Menu Mode**: Command list sorted with favorites first, then by recency
 - **Favorites**: Pin frequently used commands at the top (press `f` to toggle)
 - **All Commands**: Sorted by recency - recently used commands appear first
-- **Edit Mode**: Add new commands and delete existing ones (press `e`)
-- **Add Command**: Select from shell history or create new ones
-- **Delete Command**: Fully removes from config, favorites, and recent
-- **Search Mode**: Real-time fuzzy search through commands  
+- **Direct Actions**: Add, edit, or delete commands directly from the menu
+- **Search Mode**: Real-time fuzzy search through all commands
 - **Template Support**: Command placeholders that prompt for values
 - **Platform Aware**: Works on Linux, macOS, and Windows
 - **Auto-init**: Creates config directory and sample file if missing
@@ -35,40 +33,65 @@ node dist/index.js
 
 ### Keyboard Controls
 
+#### Menu Mode
+
 | Key | Action |
 |-----|--------|
 | ↓↑ | Navigate commands |
 | Enter / 1-9 | Select command |
 | f | Toggle favorite on selected command |
-| e | Enter edit mode (add/delete commands) |
+| a | Add new command |
+| d | Delete selected command |
+| e | Edit selected command |
 | / | Switch to search mode |
-| Escape / q | Return to menu (search mode) |
+| Escape | Switch to search mode |
 | Ctrl+C | Quit |
 
-### Edit Mode
+#### Search Mode
 
 | Key | Action |
 |-----|--------|
-| a | Add new command |
-| d | Delete commands |
-| Escape / q | Back to menu |
+| Type | Search query |
+| ↓↑ | Navigate results |
+| Enter / 1-9 | Select command |
+| Escape / q | Return to menu |
+| Backspace | Delete character |
+| Ctrl+C | Quit |
 
-### Add Command
+#### Add Command - History Selection
 
 | Key | Action |
 |-----|--------|
-| Enter | Select from history or submit command |
-| n | New command (skip history) |
+| ↓↑ | Navigate history |
+| Enter | Select command from history |
+| n | Skip to new command form |
+| Escape / q | Cancel |
+
+#### Add/Edit Command Form
+
+| Key | Action |
+|-----|--------|
+| Type | Enter text in current field |
 | Tab | Next field |
-| Escape | Back / Cancel |
+| Shift+Tab | Previous field |
+| Enter | Submit (only on Tags field) |
+| Escape | Cancel |
 
-### Delete Command
+#### Template Prompt
 
 | Key | Action |
 |-----|--------|
-| Enter | Confirm deletion |
-| n | Cancel deletion |
-| Escape | Back |
+| Type | Enter value for current placeholder |
+| Enter | Next placeholder or submit (if last) |
+| Backspace | Delete character |
+| Ctrl+L | Cancel |
+
+#### Delete Confirmation
+
+| Key | Action |
+|-----|--------|
+| y / Y / Enter | Confirm deletion |
+| n / N / q / Escape | Cancel |
 
 ### Config File
 
@@ -85,27 +108,37 @@ The app tracks favorites and recent commands:
 
 ### Menu Display
 
-The menu shows two sections:
-1. **Favorites** - Pinned commands (never sorted by recency)
+The menu shows commands in this order:
+1. **Favorites** - Pinned commands (appear first, never sorted by recency)
 2. **All Commands** - All other commands sorted by when they were last used
    - Recently used commands appear first
    - Commands never used appear at the bottom alphabetically
 
-### Adding/Deleting Commands
+### Adding Commands
 
-**Adding Commands:**
-1. Press `e` to enter Edit Mode
-2. Press `a` to add new command
-3. Select from shell history (last 30) or press `n` for new
-4. Fill form (command is mandatory, other fields optional)
-5. Press Enter to submit
+1. Press `a` to open Add Command
+2. Browse shell history (last 30 commands) and press `Enter` to select, OR
+3. Press `n` to skip to the new command form
+4. Fill in the form (Command is mandatory, other fields optional)
+5. Use `Tab` to navigate between fields
+6. Press `Enter` on the Tags field to submit
 
-**Deleting Commands:**
-1. Press `e` to enter Edit Mode
-2. Press `d` to delete commands
-3. Select command to delete
-4. Confirm deletion
-5. Removes from config, favorites, and recent
+### Editing Commands
+
+1. Select a command in the menu
+2. Press `e` to open Edit Command form
+3. Modify the fields as needed
+4. Use `Tab` to navigate between fields
+5. Press `Enter` on the Tags field to submit
+
+**Note**: If you change the command name, favorites and recent usage are automatically updated.
+
+### Deleting Commands
+
+1. Select a command in the menu
+2. Press `d` to show delete confirmation
+3. Press `y` or `Enter` to confirm deletion
+4. Removes from config, favorites, and recent history
 
 ## Command Format
 
@@ -119,12 +152,13 @@ commands:
 
 ### Templates
 
-Use `{placeholder}` syntax:
+Use `{placeholder}` syntax for dynamic values:
 ```yaml
 - name: "Git Push"
   command: "git push origin {branch}"
 ```
-When selected, you'll be prompted to enter the `branch` value.
+
+When you select a command with placeholders, you'll be prompted to enter each value. Use `Ctrl+L` to cancel.
 
 ## Development
 
