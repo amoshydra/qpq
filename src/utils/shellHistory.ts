@@ -59,6 +59,21 @@ function dedupeCommands(commands: string[]): string[] {
   return result;
 }
 
+function dedupeCommandsKeepNewest(commands: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const cmd of [...commands].reverse()) {
+    const trimmed = cmd.trim();
+    if (trimmed && !seen.has(trimmed)) {
+      seen.add(trimmed);
+      result.push(trimmed);
+    }
+  }
+
+  return result;
+}
+
 export function captureShellHistorySubprocess(count: number = 40): string[] {
   const shell = detectShell();
 
@@ -86,9 +101,10 @@ export function captureShellHistorySubprocess(count: number = 40): string[] {
     if (shell === 'zsh' || shell === 'bash') {
       commands = output.trim().split('\n')
         .map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''))
-        .filter(Boolean);
+        .filter(Boolean)
+        .reverse();
     } else {
-      commands = output.trim().split('\n').filter(Boolean);
+      commands = output.trim().split('\n').filter(Boolean).reverse();
     }
 
     return dedupeCommands(commands);
@@ -107,11 +123,12 @@ function getHistoryFromEnvVar(): string[] | null {
     // Decode base64 → pipe-separated string
     const decoded = Buffer.from(envHistory, 'base64').toString();
 
-    // Split by pipe delimiter, then reverse order (newest first)
-    const commands = decoded.split('|').filter(Boolean).reverse();
+    // Split by pipe delimiter (commands stored newest-first)
+    const commands = decoded.split('|').filter(Boolean).map(cmd => cmd.trim());
 
     if (commands.length > 0) {
-      return commands;
+      // Dedupe, keeping the newest occurrence
+      return dedupeCommandsKeepNewest(commands);
     }
 
     return null;
@@ -137,8 +154,9 @@ export async function readHistoryFiles(count: number = 30): Promise<string[]> {
 
   try {
     const content = await fs.promises.readFile(historyPath, 'utf-8');
-    // Reverse to show newest first
-    return parseHistoryFile(content, shell).reverse().slice(0, count);
+    // Parse, dedupe keeping newest, then reverse to show newest first
+    const parsed = parseHistoryFile(content, shell);
+    return dedupeCommandsKeepNewest(parsed).slice(0, count);
   } catch {
     return [];
   }
@@ -147,14 +165,27 @@ export async function readHistoryFiles(count: number = 30): Promise<string[]> {
 function parseHistoryFile(content: string, shell: string): string[] {
   if (shell === 'zsh') {
     // zsh format: : timestamp:duration;command
+    // Command may contain semicolons, so split on first ';' after ': timestamp:duration'
     return content
       .split('\n')
       .filter(line => line.startsWith(': '))
-      .map(line => line.split(';')[1])
+      .map(line => {
+        const match = line.match(/^: \d+:\d+;(.+)$/);
+        return match ? match[1] : null;
+      })
+      .filter((cmd): cmd is string => cmd !== null);
+  }
+
+  if (shell === 'fish') {
+    // fish format: "- cmd:command" lines interleaved with metadata
+    return content
+      .split('\n')
+      .filter(line => line.startsWith('- cmd:'))
+      .map(line => line.replace('- cmd:', '').trim())
       .filter(Boolean);
   }
 
-  // bash/fish: plain text, one command per line
+  // bash: plain text, one command per line
   return content.split('\n').filter(Boolean);
 }
 
@@ -183,9 +214,10 @@ function getSubprocessHistory(count: number = 30): string[] {
     let commands: string[];
     if (shell === 'zsh' || shell === 'bash') {
       commands = output.trim().split('\n')
-        .map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''));
+        .map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''))
+        .reverse();
     } else {
-      commands = output.trim().split('\n');
+      commands = output.trim().split('\n').reverse();
     }
 
     return dedupeCommands(commands).slice(0, count);
@@ -217,9 +249,10 @@ function getHistoryFromSubprocess(count: number = 30): string[] {
     let commands: string[];
     if (shell === 'zsh' || shell === 'bash') {
       commands = output.trim().split('\n')
-        .map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''));
+        .map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''))
+        .reverse();
     } else {
-      commands = output.trim().split('\n');
+      commands = output.trim().split('\n').reverse();
     }
 
     return dedupeCommands(commands).slice(0, count);
@@ -234,13 +267,13 @@ export async function getLastCommands(count: number = 30, bufferMultiplier: numb
   // Method 1: Environment variable (primary - has in-memory history from wrapper)
   const envCommands = getHistoryFromEnvVar();
   if (envCommands && envCommands.length > 0) {
-    return dedupeCommands(envCommands).slice(0, count);
+    return envCommands.slice(0, count);
   }
 
   // Method 2: Shell history files (file-based)
   const fileCommands = await readHistoryFiles(bufferCount);
   if (fileCommands.length > 0) {
-    return dedupeCommands(fileCommands).slice(0, count);
+    return fileCommands.slice(0, count);
   }
 
   // Method 3: Subprocess (unlikely to work, but try anyway as fallback)
