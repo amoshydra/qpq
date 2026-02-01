@@ -1,30 +1,14 @@
-import * as fs from 'fs';
+ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import * as os from 'os';
+import { fileURLToPath } from 'node:url';
 import * as path from 'path';
 import type { Config } from '../types/config.js';
+import { getConfigDir } from './configDir.js';
 
-function getConfigDir(): string {
-  const platform = os.platform();
-  const homeDir = os.homedir();
-
-  switch (platform) {
-    case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
-
-    case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
-
-    default:
-      return path.join(homeDir, '.local', 'qpq');
-  }
-}
-
-const DEFAULT_CONFIG_FILENAME = 'fav.yaml';
-
-function getConfigPath(customPath?: string): string {
-  return customPath || path.join(getConfigDir(), DEFAULT_CONFIG_FILENAME);
-}
+ const DEFAULT_CONFIG_FILENAME = 'fav.yaml';
+ function getConfigPath(customPath?: string): string {
+   return customPath || path.join(getConfigDir(), DEFAULT_CONFIG_FILENAME);
+ }
 
 async function ensureConfigDir(): Promise<void> {
   const configDir = getConfigDir();
@@ -35,14 +19,13 @@ async function ensureConfigDir(): Promise<void> {
   }
 }
 
-async function initConfigFile(configPath: string): Promise<void> {
-  const samplePath = path.join(process.cwd(), 'src', 'data', 'sample-commands.yaml');
-  try {
-    await fs.promises.copyFile(samplePath, configPath);
-  } catch (error) {
-    throw new Error(`Failed to initialize config file: ${String(error)}`);
-  }
-}
+ async function initConfigFile(configPath: string): Promise<void> {
+   // Get the absolute path from import.meta.url using Node.js built-in
+   const dir = path.dirname(fileURLToPath(import.meta.url));
+   const samplePath = path.join(dir, '../../sample-commands.yaml');
+
+   await fs.promises.copyFile(samplePath, configPath);
+ }
 
 function loadConfigSafely(content: string, filePath: string): Config | null {
   try {
@@ -60,6 +43,13 @@ function formatConfigError(error: Error, filePath: string): string {
   if (error instanceof yaml.YAMLException) {
     return `Failed to parse config file at ${filePath}\n${error.message}`;
   }
+
+  // Check if it's a file not found error
+  const errorCode = (error as { code?: string }).code;
+  if (errorCode === 'ENOENT') {
+    return `Config file not found at ${filePath}`;
+  }
+
   return `Error loading config file at ${filePath}: ${error.message}`;
 }
 
@@ -69,17 +59,37 @@ export async function loadConfig(customPath?: string): Promise<Config | null> {
   try {
     await ensureConfigDir();
 
+    let fileExists = false;
     try {
       await fs.promises.access(configPath);
+      fileExists = true;
     } catch {
-      await initConfigFile(configPath);
+      fileExists = false;
     }
 
+    if (!fileExists) {
+      // File doesn't exist, create it
+      await initConfigFile(configPath);
+    } else {
+      // File exists, check if it's valid
+      const content = await fs.promises.readFile(configPath, 'utf-8');
+      const config = loadConfigSafely(content, configPath);
+
+      if (config === null) {
+        console.error(formatConfigError(new Error('Invalid or corrupted config file'), configPath));
+        return null;
+      }
+
+      return config;
+    }
+
+    // After creating file, load it
     const content = await fs.promises.readFile(configPath, 'utf-8');
     const config = loadConfigSafely(content, configPath);
 
     if (config === null) {
-      console.error(formatConfigError(new Error('Invalid or corrupted config file'), configPath));
+      // If newly created config is invalid, this shouldn't happen
+      console.error(formatConfigError(new Error('Created config file is invalid'), configPath));
       return null;
     }
 

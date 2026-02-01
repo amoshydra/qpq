@@ -1,29 +1,16 @@
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import type { Command } from '../types/command.js';
+ import * as fs from 'fs';
+ import * as os from 'os';
+ import * as path from 'path';
+ import type { Command } from '../types/command.js';
+ import { getConfigDir } from './configDir.js';
 
-function getConfigDir(): string {
-  const platform = os.platform();
-  const homeDir = os.homedir();
+ const RECENT_COMMANDS_FILE = path.join(getConfigDir(), 'recent.json');
+ const MAX_RECENT = 20;
 
-  switch (platform) {
-    case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
-    case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
-    default:
-      return path.join(homeDir, '.local', 'qpq');
-  }
-}
-
-const RECENT_COMMANDS_FILE = path.join(getConfigDir(), 'recent.json');
-const MAX_RECENT = 20;
-
-interface RecentCommand {
-  name: string;
-  timestamp: number;
-}
+ interface RecentCommand {
+   name: string;
+   timestamp: number;
+ }
 
 async function ensureDir(): Promise<void> {
   const dir = getConfigDir();

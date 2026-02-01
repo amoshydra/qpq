@@ -132,19 +132,19 @@ function getConfigDir(): string {
 
   switch (platform) {
     case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
+      return path.join(homeDir, 'AppData', 'Local', 'qpq');
     case 'darwin':
       return path.join(homeDir, 'Library', 'Application Support', 'qpq');
     default:
-      return path.join(homeDir, '.local', 'qpq');
+      return path.join(homeDir, '.local', 'state', 'qpq');
   }
 }
 ```
 
 **Config Paths by Platform:**
-- **Windows**: `%APPDATA%\qpq\fav.yaml`
+- **Windows**: `%LocalAppData%\qpq\fav.yaml`
 - **macOS**: `~/Library/Application Support/qpq/fav.yaml`
-- **Linux/Unix**: `~/.local/qpq/fav.yaml`
+- **Linux/Unix**: `~/.local/state/qpq/fav.yaml`
 
 ## State Management
 
@@ -191,9 +191,9 @@ async function initConfigFile(configPath: string): Promise<void> {
 
 ### Config Locations
 
-- Linux: `~/.local/qpq/fav.yaml`
+- Linux: `~/.local/state/qpq/fav.yaml`
 - macOS: `~/Library/Application Support/qpq/fav.yaml`
-- Windows: `%APPDATA%\qpq\fav.yaml`
+- Windows: `%LocalAppData%\qpq\fav.yaml`
 
 ### Data Files
 

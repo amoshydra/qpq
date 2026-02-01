@@ -1,30 +1,14 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import type { Command } from '../types/command.js';
+ import * as fs from 'fs';
+ import * as path from 'path';
+ import type { Command } from '../types/command.js';
+ import { getConfigDir } from './configDir.js';
 
-function getConfigDir(): string {
-  const platform = os.platform();
-  const homeDir = os.homedir();
+ const FAVORITES_FILE = path.join(getConfigDir(), 'favorites.json');
+ const MAX_FAVORITES = 20;
 
-  switch (platform) {
-    case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
-
-    case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
-
-    default:
-      return path.join(homeDir, '.local', 'qpq');
-}
-}
-
-const FAVORITES_FILE = path.join(getConfigDir(), 'favorites.json');
-const MAX_FAVORITES = 20;
-
-interface FavoritesData {
-  favNames: string[];
-}
+ interface FavoritesData {
+   favNames: string[];
+ }
 
 async function ensureDir(): Promise<void> {
   const dir = getConfigDir();

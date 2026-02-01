@@ -21,6 +21,7 @@
   ],
   "author": "",
   "files": [
+    "sample-commands.yaml",
     "dist"
   ],
   "license": "MIT",

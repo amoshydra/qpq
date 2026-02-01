@@ -73,15 +73,15 @@ node dist/index.js
 ### Config File
 
 Default config locations:
-- Linux: `~/.local/qpq/fav.yaml`
+- Linux: `~/.local/state/qpq/fav.yaml`
 - macOS: `~/Library/Application Support/qpq/fav.yaml`
-- Windows: `%APPDATA%\qpq\fav.yaml`
+- Windows: `%LocalAppData%\qpq\fav.yaml`
 
 ### Favorites & Recent Files
 
 The app tracks favorites and recent commands:
-- Favorites: `~/.local/qpq/favorites.json`
-- Recent: `~/.local/qpq/recent.json`
+- Favorites: `~/.local/state/qpq/favorites.json`
+- Recent: `~/.local/state/qpq/recent.json`
 
 ### Menu Display
 
