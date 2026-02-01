@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
+import { useState } from 'react';
 import type { Command } from '../types/command.js';
 
 interface EditCommandFormProps {
@@ -10,143 +11,54 @@ interface EditCommandFormProps {
 }
 
 export function EditCommandForm({ command, existingCommands, onSubmit, onCancel }: EditCommandFormProps) {
-  const [formField, setFormField] = useState<'name' | 'command' | 'description' | 'tags'>('name');
-  const [caretPosition, setCaretPosition] = useState(command.name.length);
-  const [commandData, setCommandData] = useState<Partial<Command>>({
-    name: command.name,
-    command: command.command,
-    description: command.description || '',
-    tags: command.tags || []
-  });
-  const { exit } = useApp();
+  const [formField, setFormField] = useState<'name' | 'command' | 'description' | 'tags'>(('name') as 'name');
+  const [name, setName] = useState(command.name || '');
+  const [cmd, setCommand] = useState(command.command || '');
+  const [description, setDescription] = useState(command.description || '');
+  const [tags, setTags] = useState(command.tags?.join(', ') || '');
 
-  useInput((input, key) => {
-    if (key.escape || input === 'q') {
+  useInput((_, key) => {
+    if (key.escape) {
       onCancel();
-      return;
-    }
-
-    if (key.return) {
-      if (formField === 'tags') {
-        handleSubmit();
-        return;
-      }
+    } else if (key.tab) {
       nextField();
-      return;
-    }
-
-    if (key.leftArrow) {
-      setCaretPosition(prev => Math.max(0, prev - 1));
-      return;
-    }
-
-    if (key.rightArrow) {
-      const value = getCurrentFieldValue();
-      setCaretPosition(prev => Math.min(value.length, prev + 1));
-      return;
-    }
-
-    if (key.shift && key.tab) {
+    } else if (key.shift && key.tab) {
       prevField();
-      return;
-    }
-
-    if (key.tab) {
-      nextField();
-      return;
-    }
-
-    if (key.backspace) {
-      updateField(true, 'backspace');
-      return;
-    }
-
-    if (key.delete) {
-      updateField(true, 'delete');
-      return;
-    }
-
-    if (input && !key.ctrl) {
-      updateField(false, undefined, input);
-      return;
+    } else if (key.return && formField === 'tags') {
+      handleSubmit();
     }
   });
 
   function nextField() {
     if (formField === 'name') {
       setFormField('command');
-      setCaretPosition((commandData.command || '').length);
     } else if (formField === 'command') {
       setFormField('description');
-      setCaretPosition((commandData.description || '').length);
     } else if (formField === 'description') {
       setFormField('tags');
-      setCaretPosition((commandData.tags || []).join(', ').length);
     }
   }
 
   function prevField() {
-    if (formField === 'description') {
-      setFormField('command');
-      setCaretPosition((commandData.command || '').length);
-    } else if (formField === 'command') {
+    if (formField === 'command') {
       setFormField('name');
-      setCaretPosition((commandData.name || '').length);
+    } else if (formField === 'description') {
+      setFormField('command');
     } else if (formField === 'tags') {
       setFormField('description');
-      setCaretPosition((commandData.description || '').length);
-    }
-  }
-
-  function getCurrentFieldValue(): string {
-    if (formField === 'name') return commandData.name || '';
-    if (formField === 'command') return commandData.command || '';
-    if (formField === 'description') return commandData.description || '';
-    const tags = commandData.tags || [];
-    return tags.join(', ');
-  }
-
-  function updateField(isDelete: boolean, deleteType?: 'backspace' | 'delete', char?: string) {
-    let value = getCurrentFieldValue();
-
-    if (isDelete && deleteType === 'backspace') {
-      if (caretPosition > 0) {
-        value = value.slice(0, caretPosition - 1) + value.slice(caretPosition);
-        setCaretPosition(prev => prev - 1);
-      }
-    } else if (isDelete && deleteType === 'delete') {
-      if (caretPosition < value.length) {
-        value = value.slice(0, caretPosition) + value.slice(caretPosition + 1);
-      }
-    } else if (char) {
-      value = value.slice(0, caretPosition) + char + value.slice(caretPosition);
-      setCaretPosition(prev => prev + 1);
-    }
-
-    if (formField === 'tags') {
-      const tags = value.split(',').map(t => t.trim()).filter(Boolean);
-      setCommandData(prev => ({ ...prev, tags }));
-    } else {
-      setCommandData(prev => {
-        if (formField === 'name') return { ...prev, name: value };
-        if (formField === 'command') return { ...prev, command: value };
-        if (formField === 'description') return { ...prev, description: value };
-        return prev;
-      });
     }
   }
 
   function handleSubmit() {
-    const name = commandData.name?.trim();
-    const cmd = commandData.command?.trim();
-    const description = commandData.description?.trim();
-    const tags = commandData.tags;
+    const trimmedTags = tags.trim();
+    const parsedTags = trimmedTags === '' ? [] : trimmedTags.split(',').map(tag => tag.trim()).filter(Boolean);
 
-    if (!cmd) {
+    const finalName = name.trim();
+    const finalCmd = cmd.trim();
+
+    if (!finalCmd) {
       return;
     }
-
-    const finalName = name || cmd;
 
     const exists = existingCommands.some(c => c.name === finalName && c.name !== command.name);
     if (exists) {
@@ -154,12 +66,18 @@ export function EditCommandForm({ command, existingCommands, onSubmit, onCancel 
     }
 
     onSubmit({
-      name: finalName,
-      command: cmd,
-      description: description || undefined,
-      tags: tags && tags.length > 0 ? tags : undefined
+      name: finalName || finalCmd,
+      command: finalCmd,
+      description: description.trim() || undefined,
+      tags: parsedTags.length > 0 ? parsedTags : undefined
     });
   }
+
+  const parseTags = (tags: string) => {
+    const trimmedTags = tags.trim();
+    if (trimmedTags === '') return [];
+    return trimmedTags.split(',').map(tag => tag.trim()).filter(Boolean);
+  };
 
   return (
     <Box flexDirection="column">
@@ -168,49 +86,43 @@ export function EditCommandForm({ command, existingCommands, onSubmit, onCancel 
       </Box>
 
       <Box>
-        <Text color={formField === 'name' ? 'green' : 'gray'}>Name:</Text>
-        <Text> </Text>
-        <Text>{(commandData.name || '').slice(0, caretPosition)}</Text>
-        <Text inverse>{(commandData.name || '')[caretPosition] || ' '}</Text>
-        <Text inverse color="gray">{(commandData.name || '').slice(caretPosition + 1)}</Text>
-        <Text inverse color="gray"> </Text>
+        <Text color={formField === 'name' ? 'green' : 'gray'}>Name: </Text>
+        <TextInput
+          value={name}
+          onChange={setName}
+          focus={formField === 'name'}
+        />
       </Box>
 
       <Box>
-        <Text color={formField === 'command' ? 'green' : 'gray'}>Command:</Text>
-        <Text> </Text>
-        <Text>{(commandData.command || '').slice(0, caretPosition)}</Text>
-        <Text inverse>{(commandData.command || '')[caretPosition] || ' '}</Text>
-        <Text inverse color="gray">{(commandData.command || '').slice(caretPosition + 1)}</Text>
-        <Text inverse color="gray"> </Text>
+        <Text color={formField === 'command' ? 'green' : 'gray'}>Command: </Text>
+        <TextInput
+          value={cmd}
+          onChange={setCommand}
+          focus={formField === 'command'}
+        />
       </Box>
 
       <Box>
-        <Text color={formField === 'description' ? 'green' : 'gray'}>Description:</Text>
-        <Text> </Text>
-        <Text>{(commandData.description || '').slice(0, caretPosition)}</Text>
-        <Text inverse>{(commandData.description || '')[caretPosition] || ' '}</Text>
-        <Text inverse color="gray">{(commandData.description || '').slice(caretPosition + 1)}</Text>
-        <Text inverse color="gray"> </Text>
+        <Text color={formField === 'description' ? 'green' : 'gray'}>Description: </Text>
+        <TextInput
+          value={description}
+          onChange={setDescription}
+          focus={formField === 'description'}
+        />
       </Box>
 
       <Box>
-        <Text color={formField === 'tags' ? 'green' : 'gray'}>Tags:</Text>
-        <Text> </Text>
-        <Text>{((commandData.tags || []).join(', ')).slice(0, caretPosition)}</Text>
-        <Text inverse>{((commandData.tags || []).join(', '))[caretPosition] || ' '}</Text>
-        <Text inverse color="gray">{((commandData.tags || []).join(', ')).slice(caretPosition + 1)}</Text>
-        <Text inverse color="gray"> </Text>
+        <Text color={formField === 'tags' ? 'green' : 'gray'}>Tags: </Text>
+        <TextInput
+          value={tags}
+          onChange={setTags}
+          focus={formField === 'tags'}
+        />
       </Box>
 
       <Box marginTop={1}>
-        <Text dimColor>Command is mandatory | Tags are comma-separated</Text>
-      </Box>
-
-      <Box marginTop={1}>
-        <Text dimColor>
-          Tab/Shift+Tab: Change field | Enter: Submit | Escape: Cancel
-        </Text>
+        <Text dimColor>Tab/Shift+Tab to navigate | Escape to cancel | Enter on last field to submit</Text>
       </Box>
     </Box>
   );
