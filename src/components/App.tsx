@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
 import { Box, Text, useApp } from 'ink';
-import { CommandMenu } from './CommandMenu.js';
-import { CommandSearch } from './CommandSearch.js';
-import { TemplatePrompt } from './TemplatePrompt.js';
-import { AddCommandForm } from './AddCommandForm.js';
-import { DeleteCommand } from './DeleteCommand.js';
-import { EditCommandForm } from './EditCommandForm.js';
+import { useEffect, useState } from 'react';
+import type { Command } from '../types/command.js';
 import { loadConfig, saveConfig } from '../utils/config.js';
 import { executeCommand } from '../utils/executor.js';
+import { isFavorite as isFavoriteUtil, loadFavorites, saveFavorites, toggleFavorite as toggleFavoriteUtil } from '../utils/favorites.js';
+import { clearRecent, loadRecent, loadRecentWithTimestamps, saveRecent } from '../utils/recent.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
-import { saveRecent, loadRecent, loadRecentWithTimestamps, clearRecent } from '../utils/recent.js';
-import { loadFavorites, toggleFavorite as toggleFavoriteUtil, isFavorite as isFavoriteUtil, clearFavorites, saveFavorites } from '../utils/favorites.js';
-import type { Command } from '../types/command.js';
+import { AddCommandForm } from './AddCommandForm.js';
+import { CommandMenu } from './CommandMenu.js';
+import { CommandSearch } from './CommandSearch.js';
+import { DeleteConfirmation } from './DeleteConfirmation.js';
+import { EditCommandForm } from './EditCommandForm.js';
+import { TemplatePrompt } from './TemplatePrompt.js';
 
-type AppMode = 'menu' | 'search' | 'template' | 'add' | 'delete' | 'edit_command';
+type AppMode = 'menu' | 'search' | 'template' | 'add' | 'edit_command';
 
 interface AppState {
   mode: AppMode;
@@ -23,6 +23,8 @@ interface AppState {
   favorites: string[];
   selectedCommand: Command | null;
   editingCommand: Command | null;
+  showDeleteConfirm: boolean;
+  deleteCommand: Command | null;
 }
 
 export function App() {
@@ -35,6 +37,8 @@ export function App() {
     favorites: [],
     selectedCommand: null,
     editingCommand: null,
+    showDeleteConfirm: false,
+    deleteCommand: null,
   }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +64,7 @@ export function App() {
     async function init() {
       try {
         const config = await loadConfig();
-        
+
         if (config === null) {
           const { getDefaultConfigPath } = await import('../utils/config.js');
           const configPath = getDefaultConfigPath();
@@ -68,12 +72,12 @@ export function App() {
           setLoading(false);
           return;
         }
-        
+
         const recent = await loadRecent(config.commands);
         const timestamps = await loadRecentWithTimestamps();
         const timestampMap = new Map(timestamps.map(t => [t.name, t.timestamp]));
         const favs = await loadFavorites();
-        
+
         setState({
           mode: 'menu',
           commands: config.commands,
@@ -82,6 +86,8 @@ export function App() {
           favorites: favs,
           selectedCommand: null,
           editingCommand: null,
+          showDeleteConfirm: false,
+          deleteCommand: null,
         });
         setLoading(false);
       } catch (e) {
@@ -89,13 +95,13 @@ export function App() {
         setLoading(false);
       }
     }
-    
+
     init();
   }, []);
 
   const handleSelectCommand = async (command: Command) => {
     const placeholders = extractPlaceholders(command.command);
-    
+
     if (placeholders.length > 0) {
       setState(prev => ({
         ...prev,
@@ -139,16 +145,16 @@ export function App() {
 
   const handleAddCommand = (command: Command) => {
     if (!state.commands) return;
-    
+
     const newCommands = [...state.commands, command];
     const newConfig = { commands: newCommands };
-    
+
     saveConfig(newConfig);
     setState(prev => ({
       ...prev,
       mode: 'menu',
       commands: newCommands,
-      commandTimestamps: new Map(prev.commandTimestamps) 
+      commandTimestamps: new Map(prev.commandTimestamps)
     }));
   };
 
@@ -211,12 +217,12 @@ export function App() {
 
       const newFavorites = state.favorites.filter(f => f !== commandName);
       await saveFavorites(newFavorites);
-      
+
       const recent = state.recentCommands.filter(c => c.name !== commandName);
-      
+
       const newTimestamps = new Map(state.commandTimestamps);
       newTimestamps.delete(commandName);
-      
+
       await clearRecent();
       for (const cmd of recent) {
         await saveRecent(cmd);
@@ -236,12 +242,27 @@ export function App() {
     }
   };
 
-  const handleDeleteCancel = () => {
-    setState(prev => ({ ...prev, mode: 'menu' }));
-  };
-
   const handleCommandEditCancel = () => {
     setState(prev => ({ ...prev, mode: 'menu', editingCommand: null }));
+  };
+
+  const handleShowDeleteConfirm = (commandName: string) => {
+    const command = state.commands?.find(cmd => cmd.name === commandName) ?? null;
+    if (command) {
+      setState(prev => ({
+        ...prev,
+        showDeleteConfirm: true,
+        deleteCommand: command,
+      }));
+    }
+  };
+
+  const handleHideDeleteConfirm = () => {
+    setState(prev => ({
+      ...prev,
+      showDeleteConfirm: false,
+      deleteCommand: null,
+    }));
   };
 
   if (loading) {
@@ -284,17 +305,6 @@ export function App() {
     );
   }
 
-  if (state.mode === 'delete') {
-    return (
-      <DeleteCommand
-        commands={state.commands!}
-        favorites={state.favorites}
-        onDelete={handleDeleteCommand}
-        onCancel={handleDeleteCancel}
-      />
-    );
-  }
-
   if (state.mode === 'edit_command' && state.editingCommand) {
     return (
       <EditCommandForm
@@ -306,18 +316,35 @@ export function App() {
     );
   }
 
-  return (
-<CommandMenu
-        commands={state.commands!}
-        recentCommands={state.recentCommands}
-        commandTimestamps={state.commandTimestamps}
-        favorites={state.favorites}
-        onSelect={handleSelectCommand}
-        onSwitchToSearch={handleSwitchToSearch}
-        onToggleFavorite={handleToggleFavorite}
-        onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
-        onDelete={(commandName) => setState(prev => ({ ...prev, mode: 'delete' }))}
-        onEdit={handleEditCommand}
+  if (state.showDeleteConfirm && state.deleteCommand) {
+    return (
+      <DeleteConfirmation
+        key="delete-confirmation"
+        command={state.deleteCommand}
+        onConfirm={() => {
+          handleHideDeleteConfirm();
+          const commandName = state.deleteCommand?.name;
+          if (commandName) {
+            handleDeleteCommand(commandName);
+          }
+        }}
+        onCancel={handleHideDeleteConfirm}
       />
+    );
+  }
+
+  return (
+    <CommandMenu
+      commands={state.commands!}
+      recentCommands={state.recentCommands}
+      commandTimestamps={state.commandTimestamps}
+      favorites={state.favorites}
+      onSelect={handleSelectCommand}
+      onSwitchToSearch={handleSwitchToSearch}
+      onToggleFavorite={handleToggleFavorite}
+      onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
+      onDelete={handleShowDeleteConfirm}
+      onEdit={handleEditCommand}
+    />
   );
 }

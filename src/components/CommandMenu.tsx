@@ -14,9 +14,11 @@ interface CommandMenuProps {
   onAdd: () => void;
   onDelete: (commandName: string) => void;
   onEdit: (command: Command) => void;
+  children?: React.ReactNode;
 }
 
-export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onAdd, onDelete, onEdit }: CommandMenuProps) {
+
+export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onAdd, onDelete, onEdit, children }: CommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
 
