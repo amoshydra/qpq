@@ -1,0 +1,32 @@
+{
+  "name": "tui-launcher",
+  "version": "1.0.0",
+  "description": "A TUI launcher for frequently used commands",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "tui-launcher": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.tsx",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["tui", "launcher", "cli"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fuse.js": "^7.1.0",
+    "ink": "^6.6.0",
+    "js-yaml": "^4.1.1",
+    "react": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.2"
+  }
+}
