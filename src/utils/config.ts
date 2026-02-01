@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
 import * as yaml from 'js-yaml';
+import * as os from 'os';
+import * as path from 'path';
 import type { Config } from '../types/config.js';
 
 function getConfigDir(): string {
@@ -10,11 +10,13 @@ function getConfigDir(): string {
 
   switch (platform) {
     case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'tui-launcher');
+      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
+
     case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'tui-launcher');
+      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
+
     default:
-      return path.join(homeDir, '.local', 'tiny-launcher');
+      return path.join(homeDir, '.local', 'qpq');
   }
 }
 

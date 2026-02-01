@@ -9,12 +9,14 @@ function getConfigDir(): string {
 
   switch (platform) {
     case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'tui-launcher');
+      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
+
     case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'tui-launcher');
+      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
+
     default:
-      return path.join(homeDir, '.local', 'tiny-launcher');
-  }
+      return path.join(homeDir, '.local', 'qpq');
+}
 }
 
 const FAVORITES_FILE = path.join(getConfigDir(), 'favorites.json');

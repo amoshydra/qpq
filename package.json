@@ -1,25 +1,25 @@
 {
-  "name": "tui-launcher",
+  "name": "qpq",
   "version": "1.0.0",
   "description": "A TUI launcher for frequently used commands",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "tui-launcher": "./dist/tui-launcher-wrapper.sh"
+    "qpq": "./dist/qpq.sh"
   },
   "scripts": {
-    "build:wrapper": "mkdir -p dist && cp src/scripts/tui-launcher-wrapper.sh dist/tui-launcher-wrapper.sh && chmod +x dist/tui-launcher-wrapper.sh",
+    "build:wrapper": "mkdir -p dist && cp src/scripts/qpq.sh dist/qpq.sh && chmod +x dist/qpq.sh",
     "build": "tsc && pnpm run build:wrapper",
     "dev": "tsx src/index.tsx",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit"
   },
-  "keywords": [
-    "tui",
-    "launcher",
-    "cli"
-  ],
-  "author": "",
+      "keywords": [
+        "qpq",
+        "launcher",
+        "cli"
+      ],
+    "author": "",
   "license": "ISC",
   "dependencies": {
     "fuse.js": "^7.1.0",

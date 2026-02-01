@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 import type { Command } from '../types/command.js';
 
 function getConfigDir(): string {
@@ -9,11 +9,11 @@ function getConfigDir(): string {
 
   switch (platform) {
     case 'win32':
-      return path.join(homeDir, 'AppData', 'Roaming', 'tui-launcher');
+      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
     case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'tui-launcher');
+      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
     default:
-      return path.join(homeDir, '.local', 'tiny-launcher');
+      return path.join(homeDir, '.local', 'qpq');
   }
 }
 
@@ -36,7 +36,7 @@ async function ensureDir(): Promise<void> {
 
 export async function saveRecent(command: Command): Promise<void> {
   await ensureDir();
-  
+
   let recent: RecentCommand[] = [];
   try {
     const content = await fs.promises.readFile(RECENT_COMMANDS_FILE, 'utf-8');

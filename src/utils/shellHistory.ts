@@ -1,10 +1,10 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 
 // Buffer size strategy for shell history capture
-// 
+//
 // For typical developer usage with light duplication (20-30% duplicates):
 // - Display limit: 25-30 unique commands shown to user
 // - Buffer capture: 40 commands (1.6x multiplier) accounts for duplicates
@@ -22,7 +22,7 @@ export const DEFAULT_HISTORY_BUFFER_SIZE = 40;
 
 function detectShell(): string {
   const shell = process.env.SHELL || process.env.COMSPEC;
-  
+
   if (shell && shell.includes('zsh')) {
     return 'zsh';
   }
@@ -35,19 +35,19 @@ function detectShell(): string {
   if (shell && (shell.includes('powershell') || shell.includes('pwsh'))) {
     return 'powershell';
   }
-  
+
   const platform = os.platform();
   if (platform === 'win32') {
     return 'powershell';
   }
-  
+
   return 'zsh';
 }
 
 function dedupeCommands(commands: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
-  
+
   for (const cmd of commands) {
     const trimmed = cmd.trim();
     if (trimmed && !seen.has(trimmed)) {
@@ -55,12 +55,12 @@ function dedupeCommands(commands: string[]): string[] {
       result.push(trimmed);
     }
   }
-  
+
   return result;
 }
 
 function getHistoryFromEnvVar(): string[] | null {
-  const envHistory = process.env.TUI_LAUNCHER_SHELL_HISTORY;
+  const envHistory = process.env.QPQ_SHELL_HISTORY;
   if (!envHistory || envHistory === '') {
     return null;
   }
@@ -68,14 +68,14 @@ function getHistoryFromEnvVar(): string[] | null {
   try {
     // Decode base64 → pipe-separated string
     const decoded = Buffer.from(envHistory, 'base64').toString();
-    
+
     // Split by pipe delimiter, then reverse order (newest first)
     const commands = decoded.split('|').filter(Boolean).reverse();
-    
+
     if (commands.length > 0) {
       return commands;
     }
-    
+
     return null;
   } catch (error) {
     return null;
@@ -86,7 +86,7 @@ async function readHistoryFiles(count: number = 30): Promise<string[]> {
   const home = os.homedir();
   const shell = detectShell();
   let historyPath: string;
-  
+
   if (shell === 'zsh') {
     historyPath = path.join(home, '.zsh_history');
   } else if (shell === 'bash') {
@@ -115,17 +115,17 @@ function parseHistoryFile(content: string, shell: string): string[] {
       .map(line => line.split(';')[1])
       .filter(Boolean);
   }
-  
+
   // bash/fish: plain text, one command per line
   return content.split('\n').filter(Boolean);
 }
 
 function getSubprocessHistory(count: number = 30): string[] {
   const shell = detectShell();
-  
+
   try {
     let output = '';
-    
+
     switch (shell) {
       case 'zsh':
       case 'bash':
@@ -140,7 +140,7 @@ function getSubprocessHistory(count: number = 30): string[] {
       default:
         output = execSync('history | tail -n ' + count, { encoding: 'utf-8' });
     }
-    
+
     // Parse output based on shell type
     let commands: string[];
     if (shell === 'zsh' || shell === 'bash') {
@@ -149,7 +149,7 @@ function getSubprocessHistory(count: number = 30): string[] {
     } else {
       commands = output.trim().split('\n');
     }
-    
+
     return dedupeCommands(commands).slice(0, count);
   } catch {
     return [];
@@ -160,7 +160,7 @@ function getHistoryFromSubprocess(count: number = 30): string[] {
   try {
     const shell = detectShell();
     let output = '';
-    
+
     switch (shell) {
       case 'zsh':
       case 'bash':
@@ -175,7 +175,7 @@ function getHistoryFromSubprocess(count: number = 30): string[] {
       default:
         output = execSync('history | tail -n ' + count, { encoding: 'utf-8' });
     }
-    
+
     let commands: string[];
     if (shell === 'zsh' || shell === 'bash') {
       commands = output.trim().split('\n')
@@ -183,7 +183,7 @@ function getHistoryFromSubprocess(count: number = 30): string[] {
     } else {
       commands = output.trim().split('\n');
     }
-    
+
     return dedupeCommands(commands).slice(0, count);
   } catch {
     return [];
@@ -192,7 +192,7 @@ function getHistoryFromSubprocess(count: number = 30): string[] {
 
 export async function getLastCommands(count: number = 30, bufferMultiplier: number = 1.6): Promise<string[]> {
   const bufferCount = Math.max(count, Math.round(count * bufferMultiplier));
-  
+
   // Method 1: Environment variable (primary - has in-memory history from wrapper)
   const envCommands = getHistoryFromEnvVar();
   if (envCommands && envCommands.length > 0) {

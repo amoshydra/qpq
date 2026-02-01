@@ -1,4 +1,4 @@
-# TUI Launcher
+# QPQ
 
 A terminal-based command launcher for frequently used commands. Built with TypeScript, React, and Ink.
 
@@ -73,15 +73,15 @@ node dist/index.js
 ### Config File
 
 Default config locations:
-- Linux: `~/.local/tiny-launcher/fav.yaml`
-- macOS: `~/Library/Application Support/tui-launcher/fav.yaml`
-- Windows: `%APPDATA%\tui-launcher\fav.yaml`
+- Linux: `~/.local/qpq/fav.yaml`
+- macOS: `~/Library/Application Support/qpq/fav.yaml`
+- Windows: `%APPDATA%\qpq\fav.yaml`
 
 ### Favorites & Recent Files
 
 The app tracks favorites and recent commands:
-- Favorites: `~/.local/tiny-launcher/favorites.json`
-- Recent: `~/.local/tiny-launcher/recent.json`
+- Favorites: `~/.local/qpq/favorites.json`
+- Recent: `~/.local/qpq/recent.json`
 
 ### Menu Display
 
@@ -136,9 +136,9 @@ pnpm run type-check  # TypeScript checks
 
 ## FAQ
 
-### Why the wrapper script?
+### Why qpq.sh wrapper?
 
-`tui-launcher-wrapper.sh` captures your shell's **in-memory history** before launching. Without it, only previously saved history (on disk) is visible.
+`qpq.sh` captures your shell's **in-memory history** before launching. Without it, only previously saved history (on disk) is visible.
 
 The wrapper ensures you see commands you just typed, working across all shell configurations.
 

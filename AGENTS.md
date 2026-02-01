@@ -4,7 +4,7 @@ This file provides coding conventions and development guidelines for agentic cod
 
 ## Project Overview
 
-tui-launcher is a TypeScript terminal UI application built with React and Ink. It provides a menu-based launcher for frequently used commands, featuring favorites, recent commands, search, and edit modes.
+qpq is a TypeScript terminal UI application built with React and Ink. It provides a menu-based launcher for frequently used commands, featuring favorites, recent commands, search, and edit modes.
 
 ## Build & Development Commands
 
@@ -75,11 +75,12 @@ src/
 
 ### Platform-Specific Code
 Use `os.platform()` and `os.homedir()`:
+
 ```typescript
 switch (os.platform()) {
-  case 'win32': return path.join(homeDir, 'AppData', 'Roaming', 'tui-launcher');
-  case 'darwin': return path.join(homeDir, 'Library', 'Application Support', 'tui-launcher');
-  default: return path.join(homeDir, '.local', 'tiny-launcher');
+  case 'win32': return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
+  case 'darwin': return path.join(homeDir, 'Library', 'Application Support', 'qpq');
+  default: return path.join(homeDir, '.local', 'qpq');
 }
 ```
 
@@ -92,9 +93,9 @@ switch (os.platform()) {
 ## Project-Specific Notes
 
 ### Config Locations
-- Linux: `~/.local/tiny-launcher/fav.yaml`
-- macOS: `~/Library/Application Support/tui-launcher/fav.yaml`
-- Windows: `%APPDATA%\tui-launcher\fav.yaml`
+- Linux: `~/.local/qpq/fav.yaml`
+- macOS: `~/Library/Application Support/qpq/fav.yaml`
+- Windows: `%APPDATA%\qpq\fav.yaml`
 
 ### Key Dependencies
 - `ink` (v6) - React for CLIs
