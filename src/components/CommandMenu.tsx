@@ -11,10 +11,12 @@ interface CommandMenuProps {
   onSelect: (command: Command) => void;
   onSwitchToSearch: () => void;
   onToggleFavorite: (commandName: string) => void;
-  onEnterEdit: () => void;
+  onAdd: () => void;
+  onDelete: (commandName: string) => void;
+  onEdit: (command: Command) => void;
 }
 
-export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onEnterEdit }: CommandMenuProps) {
+export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onAdd, onDelete, onEdit }: CommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
 
@@ -77,8 +79,20 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
       return;
     }
 
-    if (input === 'e') {
-      onEnterEdit();
+    if (input === 'a') {
+      onAdd();
+      return;
+    }
+
+    if (input === 'd' && allCommands.length > 0) {
+      const selectedCommand = allCommands[selectedIndex];
+      onDelete(selectedCommand.name);
+      return;
+    }
+
+    if (input === 'e' && allCommands.length > 0) {
+      const selectedCommand = allCommands[selectedIndex];
+      onEdit(selectedCommand);
       return;
     }
   });
@@ -134,7 +148,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
 
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: Navigate | Enter/1-9: Select | f: Toggle favorite | e: Edit mode | /: Search | Ctrl+C: Quit
+          ↑↓: Navigate | Enter/1-9: Select | f: Favorite | a: Add | d: Delete | e: Edit | /: Search | Ctrl+C: Quit
         </Text>
       </Box>
     </Box>

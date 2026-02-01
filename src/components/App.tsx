@@ -3,17 +3,17 @@ import { Box, Text, useApp } from 'ink';
 import { CommandMenu } from './CommandMenu.js';
 import { CommandSearch } from './CommandSearch.js';
 import { TemplatePrompt } from './TemplatePrompt.js';
-import { EditMenu } from './EditMenu.js';
 import { AddCommandForm } from './AddCommandForm.js';
 import { DeleteCommand } from './DeleteCommand.js';
+import { EditCommandForm } from './EditCommandForm.js';
 import { loadConfig, saveConfig } from '../utils/config.js';
 import { executeCommand } from '../utils/executor.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
 import { saveRecent, loadRecent, loadRecentWithTimestamps, clearRecent } from '../utils/recent.js';
-import { loadFavorites, toggleFavorite as toggleFavoriteUtil, isFavorite as isFavoriteUtil, clearFavorites } from '../utils/favorites.js';
+import { loadFavorites, toggleFavorite as toggleFavoriteUtil, isFavorite as isFavoriteUtil, clearFavorites, saveFavorites } from '../utils/favorites.js';
 import type { Command } from '../types/command.js';
 
-type AppMode = 'menu' | 'search' | 'template' | 'edit' | 'add' | 'delete';
+type AppMode = 'menu' | 'search' | 'template' | 'add' | 'delete' | 'edit_command';
 
 interface AppState {
   mode: AppMode;
@@ -22,6 +22,7 @@ interface AppState {
   commandTimestamps: Map<string, number>;
   favorites: string[];
   selectedCommand: Command | null;
+  editingCommand: Command | null;
 }
 
 export function App() {
@@ -33,6 +34,7 @@ export function App() {
     commandTimestamps: new Map(),
     favorites: [],
     selectedCommand: null,
+    editingCommand: null,
   }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,7 @@ export function App() {
           commandTimestamps: timestampMap,
           favorites: favs,
           selectedCommand: null,
+          editingCommand: null,
         });
         setLoading(false);
       } catch (e) {
@@ -134,14 +137,6 @@ export function App() {
     setState(prev => ({ ...prev, favorites: updatedFavs }));
   };
 
-  const handleEnterEdit = () => {
-    setState(prev => ({ ...prev, mode: 'edit' }));
-  };
-
-  const handleEditCancel = () => {
-    setState(prev => ({ ...prev, mode: 'menu' }));
-  };
-
   const handleAddCommand = (command: Command) => {
     if (!state.commands) return;
     
@@ -158,7 +153,51 @@ export function App() {
   };
 
   const handleAddCancel = () => {
-    setState(prev => ({ ...prev, mode: 'edit' }));
+    setState(prev => ({ ...prev, mode: 'menu' }));
+  };
+
+  const handleEditCommand = (command: Command) => {
+    setState(prev => ({
+      ...prev,
+      mode: 'edit_command',
+      editingCommand: command,
+    }));
+  };
+
+  const handleEditSubmit = async (updatedCommand: Command) => {
+    if (!state.commands || !state.editingCommand) return;
+
+    const originalName = state.editingCommand.name;
+    const nameChanged = updatedCommand.name !== originalName;
+    const wasFavorite = isFavoriteUtil(originalName, state.favorites);
+
+    const newCommands = state.commands.filter(c => c.name !== originalName);
+    const newConfig = { commands: [...newCommands, updatedCommand] };
+
+    await saveConfig(newConfig);
+
+    if (nameChanged) {
+      if (wasFavorite) {
+        const newFavorites = state.favorites
+          .filter(f => f !== originalName)
+          .concat(updatedCommand.name);
+        await saveFavorites(newFavorites);
+      }
+
+      const recent = state.recentCommands.filter(c => c.name !== originalName);
+      await clearRecent();
+      for (const cmd of recent) {
+        await saveRecent(cmd);
+      }
+    }
+
+    setState(prev => ({
+      ...prev,
+      mode: 'menu',
+      commands: newConfig.commands,
+      favorites: nameChanged && wasFavorite ? state.favorites.filter(f => f !== originalName).concat(updatedCommand.name) : prev.favorites,
+      editingCommand: null,
+    }));
   };
 
   const handleDeleteCommand = async (commandName: string) => {
@@ -170,11 +209,8 @@ export function App() {
 
       await saveConfig(newConfig);
 
-      if (isFavoriteUtil(commandName, state.favorites)) {
-        await clearFavorites();
-      }
-      
       const newFavorites = state.favorites.filter(f => f !== commandName);
+      await saveFavorites(newFavorites);
       
       const recent = state.recentCommands.filter(c => c.name !== commandName);
       
@@ -188,7 +224,7 @@ export function App() {
 
       setState(prev => ({
         ...prev,
-        mode: 'delete',
+        mode: 'menu',
         commands: newCommands,
         recentCommands: recent,
         favorites: newFavorites,
@@ -201,7 +237,11 @@ export function App() {
   };
 
   const handleDeleteCancel = () => {
-    setState(prev => ({ ...prev, mode: 'edit' }));
+    setState(prev => ({ ...prev, mode: 'menu' }));
+  };
+
+  const handleCommandEditCancel = () => {
+    setState(prev => ({ ...prev, mode: 'menu', editingCommand: null }));
   };
 
   if (loading) {
@@ -234,16 +274,6 @@ export function App() {
     );
   }
 
-  if (state.mode === 'edit') {
-    return (
-      <EditMenu
-        onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
-        onDelete={() => setState(prev => ({ ...prev, mode: 'delete' }))}
-        onCancel={handleEditCancel}
-      />
-    );
-  }
-
   if (state.mode === 'add') {
     return (
       <AddCommandForm
@@ -265,16 +295,29 @@ export function App() {
     );
   }
 
+  if (state.mode === 'edit_command' && state.editingCommand) {
+    return (
+      <EditCommandForm
+        command={state.editingCommand}
+        existingCommands={state.commands!}
+        onSubmit={handleEditSubmit}
+        onCancel={handleCommandEditCancel}
+      />
+    );
+  }
+
   return (
-    <CommandMenu
-      commands={state.commands!}
-      recentCommands={state.recentCommands}
-      commandTimestamps={state.commandTimestamps}
-      favorites={state.favorites}
-      onSelect={handleSelectCommand}
-      onSwitchToSearch={handleSwitchToSearch}
-      onToggleFavorite={handleToggleFavorite}
-      onEnterEdit={handleEnterEdit}
-    />
+<CommandMenu
+        commands={state.commands!}
+        recentCommands={state.recentCommands}
+        commandTimestamps={state.commandTimestamps}
+        favorites={state.favorites}
+        onSelect={handleSelectCommand}
+        onSwitchToSearch={handleSwitchToSearch}
+        onToggleFavorite={handleToggleFavorite}
+        onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
+        onDelete={(commandName) => setState(prev => ({ ...prev, mode: 'delete' }))}
+        onEdit={handleEditCommand}
+      />
   );
 }
