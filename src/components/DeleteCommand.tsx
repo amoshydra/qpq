@@ -110,15 +110,10 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
               <Text color={idx === selectedIndex ? 'green' : 'gray'}>{idx + 1}.</Text>
             </Box>
             <Box width={30}>
-              <Text inverse={idx === selectedIndex} color={idx === selectedIndex ? 'green' : undefined}>
+              <Text inverse={idx === selectedIndex} color={idx === selectedIndex ? 'green' : favorites.includes(cmd.name) ? 'yellow' : undefined}>
                 {cmd.name}
               </Text>
             </Box>
-            {favorites.includes(cmd.name) && (
-              <Box marginLeft={1}>
-                <Text color="yellow">⭐</Text>
-              </Box>
-            )}
             <Box>
               <Text dimColor>{cmd.description || ''}</Text>
             </Box>

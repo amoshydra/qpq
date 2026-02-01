@@ -289,6 +289,7 @@ export function App() {
       <CommandSearch
         allCommands={state.commands!}
         recentCommands={state.recentCommands}
+        favorites={state.favorites}
         onSelect={handleSelectCommand}
         onSwitchToMenu={handleSwitchToMenu}
       />

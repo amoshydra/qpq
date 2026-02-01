@@ -7,11 +7,12 @@ import type { Command } from '../types/command.js';
 interface CommandSearchProps {
   allCommands: Command[];
   recentCommands: Command[];
+  favorites: string[];
   onSelect: (command: Command) => void;
   onSwitchToMenu: () => void;
 }
 
-export function CommandSearch({ allCommands, recentCommands, onSelect, onSwitchToMenu }: CommandSearchProps) {
+export function CommandSearch({ allCommands, recentCommands, favorites, onSelect, onSwitchToMenu }: CommandSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
@@ -90,6 +91,7 @@ export function CommandSearch({ allCommands, recentCommands, onSelect, onSwitchT
               command={command}
               isSelected={index === selectedIndex}
               index={index}
+              isFavorite={favorites.includes(command.name)}
             />
           ))}
         </>

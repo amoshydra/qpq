@@ -99,54 +99,21 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
     }
   });
 
-  const hasFavorites = favoritesList.length > 0;
-  const hasNonFavorites = nonFavoriteCommands.length > 0;
-
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color="cyan" bold>My Commands</Text>
       </Box>
 
-      {hasFavorites && (
-        <>
-          <Box marginBottom={1}>
-            <Text color="yellow" bold>★ Favorites</Text>
-          </Box>
-          {favoritesList.map((command, index) => (
-            <CommandItem
-              key={command.name}
-              command={command}
-              isSelected={index === selectedIndex}
-              index={index}
-              isFavorite={true}
-            />
-          ))}
-        </>
-      )}
-
-      {hasFavorites && hasNonFavorites && (
-        <Box marginY={1}>
-          <Text dimColor>──────────────────────</Text>
-        </Box>
-      )}
-
-      {hasNonFavorites && (
-        <>
-          <Box marginBottom={1}>
-            <Text color="magenta" bold>All Commands</Text>
-          </Box>
-          {nonFavoriteCommands.map((command, index) => (
-            <CommandItem
-              key={command.name}
-              command={command}
-              isSelected={favoritesList.length + index === selectedIndex}
-              index={favoritesList.length + index}
-              isFavorite={false}
-            />
-          ))}
-        </>
-      )}
+      {allCommands.map((command, index) => (
+        <CommandItem
+          key={command.name}
+          command={command}
+          isSelected={index === selectedIndex}
+          index={index}
+          isFavorite={favorites.includes(command.name)}
+        />
+      ))}
 
       <Box marginTop={1}>
         <Text dimColor>
