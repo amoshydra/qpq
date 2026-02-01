@@ -14,13 +14,16 @@
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit"
   },
-      "keywords": [
-        "qpq",
-        "launcher",
-        "cli"
-      ],
-    "author": "",
-  "license": "ISC",
+  "keywords": [
+    "qpq",
+    "launcher",
+    "cli"
+  ],
+  "author": "",
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
   "dependencies": {
     "fuse.js": "^7.1.0",
     "ink": "^6.6.0",
