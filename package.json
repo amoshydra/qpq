@@ -2,14 +2,13 @@
   "name": "qpq",
   "version": "0.0.1",
   "description": "A TUI launcher for frequently used commands",
-  "main": "dist/index.js",
+  "main": "dist/cli.js",
   "type": "module",
   "bin": {
-    "qpq": "./dist/qpq.sh"
+    "qpq": "./dist/cli.js"
   },
   "scripts": {
-    "build:wrapper": "mkdir -p dist && cp src/scripts/qpq.sh dist/qpq.sh && chmod +x dist/qpq.sh",
-    "build": "tsc && pnpm run build:wrapper",
+    "build": "tsc",
     "dev": "tsx src/index.tsx",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit"
