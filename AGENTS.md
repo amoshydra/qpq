@@ -8,7 +8,7 @@ qpq is a TypeScript terminal UI application built with React and Ink. It provide
 
 ## Build & Development Commands
 
-This project uses **pnpm**.
+This project uses **pnpm** as the package manager.
 
 ```bash
 pnpm install          # Install dependencies
@@ -16,13 +16,17 @@ pnpm run dev          # Dev mode (auto-reload with tsx)
 pnpm run build        # Build for production
 pnpm run type-check   # TypeScript check
 pnpm start            # Run built app
+pnpm run build:wrapper  # Build wrapper script only
 ```
 
-**Single Tests:** No test framework configured. If adding tests, use Vitest: `pnpm test <test-file-name>`
+**Build Output:**
+- Built files are output to `dist/` directory
+- Wrapper script at `dist/qpq.sh` for shell integration
 
 ## Code Style Guidelines
 
 ### File Structure & Naming
+
 ```
 src/
 ├── components/     # React components (PascalCase: CommandMenu.tsx)
@@ -31,87 +35,203 @@ src/
 └── data/           # Static data (YAML sample configs)
 ```
 
+**Conventions:**
+- Components: PascalCase (e.g., `CommandItem.tsx`)
+- Utility files: camelCase with descriptive names (e.g., `loadFavorites.ts`)
+- Type files: PascalCase (e.g., `Command.ts`)
+- Test files: Same name as source with `.test` suffix (e.g., `config.test.ts`)
+
 ### Import Style
+
 - **All imports must use `.js` extensions** (Node.js ESM requirement)
-- Group imports: external libs first, internal modules second
-- Named exports > default exports
-- Use type-only imports for types: `import type { Command } from '../types/command.js'`
-- For naming conflicts: `import type { Command as CommandT } from '../types/command.js'`
-
-### TypeScript Patterns
-- Use `type` for aliases, `interface` for object shapes
-- Annotate function parameters explicitly
-- Export keywords with declarations explicitly
-- Example: `export function loadConfig(customPath?: string): Promise<Config | null>`
-
-### React Component Patterns
-- Functional components with hooks (no classes)
-- Props interfaces above the component, destructured in signature
-- Type annotations for parameters, `?:` for optional props
-- Example: `export function CommandItem({ command, isSelected, isFavorite = false }: CommandItemProps)`
-
-### Formatting
-- **2 spaces** indentation
-- Max line length: ~100 chars (soft limit)
-- Opening brace on same line: `function foo() {`
-- One space after keywords/parentheses in arrows: `(x) => x + 1`
-
-### State Management
-- `useState` for local component state
-- `useEffect` for side effects and initialization
-- Functional `setState` for updates: `setState(prev => ({ ...prev, mode: 'search' }))`
-- `useApp` from Ink for app-level actions like `exit()`
-
-### Error Handling
-- try-catch for async functions
-- Type guard errors: `e instanceof Error ? e.message : 'Unknown error'`
-- Return null/empty for non-critical failures
-- Include context in error messages
-
-### File I/O Patterns
-- `fs.promises` for async operations
-- `path.join()` for cross-platform paths
-- Check directories: `access()` with `{ recursive: true }` for mkdir
-
-### Platform-Specific Code
-Use `os.platform()` and `os.homedir()`:
+- Group imports: external libraries first, then local modules
+- Use named exports > default exports
+- Use type-only imports for TypeScript types
 
 ```typescript
-switch (os.platform()) {
-  case 'win32': return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
-  case 'darwin': return path.join(homeDir, 'Library', 'Application Support', 'qpq');
-  default: return path.join(homeDir, '.local', 'qpq');
+import React, { useState } from 'react';
+import { Box, Text, useInput } from 'ink';
+import type { Command } from '../types/command.js';
+import { loadConfig } from '../utils/config.js';
+```
+
+### TypeScript Patterns
+
+- Use `type` for simple type aliases
+- Use `interface` for object shapes when using implements/extends
+- Explicitly annotate function parameters and return types
+
+```typescript
+export type Command = {
+  name: string;
+  command: string;
+  description?: string;
+  tags?: string[];
+};
+```
+
+### React Component Patterns
+
+- Functional components with hooks (no class components)
+- Props interfaces above the component definition
+- Destructure props in the function signature with type annotations
+
+```typescript
+interface CommandItemProps {
+  command: Command;
+  isSelected: boolean;
+  index: number;
+  isFavorite?: boolean;
+}
+
+export function CommandItem({ command, isSelected, index, isFavorite = false }: CommandItemProps) {
+  // Component implementation
 }
 ```
 
-### JSX/Ink Patterns
-- `Box` for layout containers with `flexDirection`
-- `Text` for all text rendering
-- Styling props: `color`, `bold`, `dimColor`, `inverse`
-- Key prop for list rendering: `commands.map(cmd => <CommandItem key={cmd.name} />)`
+### Formatting
+
+- **2 spaces** for indentation
+- Maximum line length: ~100 characters
+- Opening brace on the same line for functions/objects
+
+```typescript
+function foo() {
+  return x + 1;
+}
+
+const bar = (x: number) => x + 1;
+```
+
+### Error Handling Patterns
+
+- Use try-catch blocks with descriptive error messages
+- Check access and handle permission errors for filesystem operations
+- Provide context in error messages (file paths, operation type)
+
+```typescript
+async function ensureConfigDir(): Promise<void> {
+  const configDir = getConfigDir();
+  try {
+    await fs.promises.access(configDir);
+  } catch {
+    await fs.promises.mkdir(configDir, { recursive: true });
+  }
+}
+```
+
+### Platform-Specific Considerations
+
+- Use `path.join()` for file path construction
+- Use `os.platform()` for platform detection
+
+```typescript
+function getConfigDir(): string {
+  const platform = os.platform();
+  const homeDir = os.homedir();
+
+  switch (platform) {
+    case 'win32':
+      return path.join(homeDir, 'AppData', 'Roaming', 'qpq');
+    case 'darwin':
+      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
+    default:
+      return path.join(homeDir, '.local', 'qpq');
+  }
+}
+```
+
+**Config Paths by Platform:**
+- **Windows**: `%APPDATA%\qpq\fav.yaml`
+- **macOS**: `~/Library/Application Support/qpq/fav.yaml`
+- **Linux/Unix**: `~/.local/qpq/fav.yaml`
+
+## State Management
+
+- Use React's `useState` for local component state
+- Use `useEffect` for side effects and initialization
+- Use `useInput` from Ink for keyboard handling
+
+```typescript
+const [selectedIndex, setSelectedIndex] = useState(0);
+
+useInput((input, key) => {
+  if (key.ctrl && input === 'c') {
+    exit();
+    return;
+  }
+
+  if (key.return) {
+    if (allCommands.length > 0) {
+      onSelect(allCommands[selectedIndex]);
+    }
+    return;
+  }
+});
+```
+
+## File Operations
+
+- Use `fs.promises` for async filesystem operations
+- Handle access errors with `fs.promises.access()` checks
+- Provide clear error messages with file paths
+
+```typescript
+async function initConfigFile(configPath: string): Promise<void> {
+  const samplePath = path.join(process.cwd(), 'src', 'data', 'sample-commands.yaml');
+  try {
+    await fs.promises.copyFile(samplePath, configPath);
+  } catch (error) {
+    throw new Error(`Failed to initialize config file: ${String(error)}`);
+  }
+}
+```
 
 ## Project-Specific Notes
 
 ### Config Locations
+
 - Linux: `~/.local/qpq/fav.yaml`
 - macOS: `~/Library/Application Support/qpq/fav.yaml`
 - Windows: `%APPDATA%\qpq\fav.yaml`
 
+### Data Files
+
+- **Config file:** YAML format with `commands` array root
+- **Sample file:** `src/data/sample-commands.yaml` - provides default commands
+
+**Sample command format:**
+```yaml
+commands:
+  - name: "Git Status"
+    command: "git status"
+    description: "Show git status"
+    tags: [git]
+```
+
 ### Key Dependencies
-- `ink` (v6) - React for CLIs
-- `react` (v19) - UI library
-- `fuse.js` - Fuzzy search
+
+- `ink` v6 - React for terminal UIs
+- `react` v19 - UI library
+- `fuse.js` - Fuzzy search implementation
 - `js-yaml` - YAML parsing
+- `ink-text-input` - Text input handling
 
-### Mode States
-`menu` | `search` | `template` | `edit` | `add` | `delete` - app navigation states
+### Application Modes
 
-### Command Execution
-Uses `spawn()` with `shell: true` and `stdio: 'inherit'`
+- `menu` - Main command menu
+- `search` - Search mode (fuzzy search)
+- `template` - Template variable prompting
+- `add` - Add new command form
+- `delete` - Delete command confirmation
+- `edit_command` - Edit existing command form
 
-## When Making Changes
-1. Run `pnpm run type-check` before committing
-2. Test keyboard navigation flows
-3. Verify config file handling (create, read, write)
-4. Check platform-specific paths for all OSs
-5. **Ensure all imports use `.js` extensions** (critical for ESM)
+### Shell Integration
+
+The `qpq.sh` wrapper script captures shell history from environment variable.
+
+**Important:** Commands from the current session won't appear if running `node dist/index.js` directly.
+
+---
+
+This document provides a concise overview of the coding conventions for this project. Always maintain consistency with the existing codebase.
