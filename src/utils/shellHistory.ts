@@ -59,6 +59,44 @@ function dedupeCommands(commands: string[]): string[] {
   return result;
 }
 
+export function captureShellHistorySubprocess(count: number = 40): string[] {
+  const shell = detectShell();
+
+  try {
+    let output = '';
+
+    switch (shell) {
+      case 'zsh':
+        output = execSync('zsh -c "history | tail -n ' + count + '"', { encoding: 'utf-8' });
+        break;
+      case 'bash':
+        output = execSync('bash -c "history | tail -n ' + count + '"', { encoding: 'utf-8' });
+        break;
+      case 'fish':
+        output = execSync('fish -c "history"', { encoding: 'utf-8' });
+        break;
+      case 'powershell':
+        output = execSync('pwsh -c "Get-History -Count ' + count + ' | ForEach-Object { $_.CommandLine }"', { encoding: 'utf-8' });
+        break;
+      default:
+        output = execSync('history | tail -n ' + count, { encoding: 'utf-8' });
+    }
+
+    let commands: string[];
+    if (shell === 'zsh' || shell === 'bash') {
+      commands = output.trim().split('\n')
+        .map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''))
+        .filter(Boolean);
+    } else {
+      commands = output.trim().split('\n').filter(Boolean);
+    }
+
+    return dedupeCommands(commands);
+  } catch {
+    return [];
+  }
+}
+
 function getHistoryFromEnvVar(): string[] | null {
   const envHistory = process.env.QPQ_SHELL_HISTORY;
   if (!envHistory || envHistory === '') {
@@ -82,7 +120,7 @@ function getHistoryFromEnvVar(): string[] | null {
   }
 }
 
-async function readHistoryFiles(count: number = 30): Promise<string[]> {
+export async function readHistoryFiles(count: number = 30): Promise<string[]> {
   const home = os.homedir();
   const shell = detectShell();
   let historyPath: string;

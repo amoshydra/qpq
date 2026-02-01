@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import type { Command } from '../types/command.js';
-import { getLastCommands } from '../utils/shellHistory.js';
+import { captureShellHistorySubprocess } from '../utils/shellHistory.js';
+import { readHistoryFiles } from '../utils/shellHistory.js';
 
 interface AddCommandFormProps {
   existingCommands: Command[];
@@ -28,8 +29,11 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
   useEffect(() => {
     async function loadHistory() {
       try {
-        const commands = await getLastCommands(30);
-        setHistoryCommands(commands);
+        let commands = captureShellHistorySubprocess(40);
+        if (commands.length === 0) {
+          commands = await readHistoryFiles(40);
+        }
+        setHistoryCommands(commands.slice(0, 30));
       } catch {
         setHistoryCommands([]);
       }
