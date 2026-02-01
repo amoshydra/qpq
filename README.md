@@ -134,6 +134,23 @@ pnpm run build    # Compile to dist/
 pnpm run type-check  # TypeScript checks
 ```
 
+## FAQ
+
+### Why the wrapper script?
+
+`tui-launcher-wrapper.sh` captures your shell's **in-memory history** before launching. Without it, only previously saved history (on disk) is visible.
+
+The wrapper ensures you see commands you just typed, working across all shell configurations.
+
+### How does history capture work?
+
+Tries three methods (in order):
+1. **Environment variable** - from wrapper script (fastest, has current session)
+2. **History files** - reads `.bash_history`, `.zsh_history` from disk
+3. **Subprocess** - spawns shell to run `history` built-in
+
+If your shell has `INC_APPEND_HISTORY` enabled (many zsh configs), running `node dist/index.js` directly also works.
+
 ## Error Handling
 
 If config file is corrupted, the app will show:
