@@ -91,3 +91,10 @@ export async function loadConfig(customPath?: string): Promise<Config | null> {
 export function getDefaultConfigPath(): string {
   return getConfigPath();
 }
+
+export async function saveConfig(config: Config): Promise<void> {
+  const configPath = getConfigPath();
+  await ensureConfigDir();
+  const content = yaml.dump(config);
+  await fs.promises.writeFile(configPath, content, 'utf-8');
+}

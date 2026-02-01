@@ -6,9 +6,10 @@ interface CommandItemProps {
   command: CommandT;
   isSelected: boolean;
   index: number;
+  isFavorite?: boolean;
 }
 
-export function CommandItem({ command, isSelected, index }: CommandItemProps) {
+export function CommandItem({ command, isSelected, index, isFavorite = false }: CommandItemProps) {
   return (
     <Box>
       <Box width={4}>
@@ -19,6 +20,11 @@ export function CommandItem({ command, isSelected, index }: CommandItemProps) {
           {command.name}
         </Text>
       </Box>
+      {isFavorite && (
+        <Box marginLeft={1}>
+          <Text color="yellow">⭐</Text>
+        </Box>
+      )}
       <Box>
         <Text dimColor>{command.description || ''}</Text>
       </Box>

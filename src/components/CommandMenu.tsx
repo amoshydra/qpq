@@ -5,13 +5,35 @@ import type { Command } from '../types/command.js';
 
 interface CommandMenuProps {
   commands: Command[];
+  recentCommands: Command[];
+  commandTimestamps: Map<string, number>;
+  favorites: string[];
   onSelect: (command: Command) => void;
   onSwitchToSearch: () => void;
+  onToggleFavorite: (commandName: string) => void;
+  onEnterEdit: () => void;
 }
 
-export function CommandMenu({ commands, onSelect, onSwitchToSearch }: CommandMenuProps) {
+export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onEnterEdit }: CommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
+
+  const favoritesList = commands.filter(cmd => favorites.includes(cmd.name));
+
+  const nonFavoriteCommands = commands.filter(cmd => !favorites.includes(cmd.name))
+    .sort((a, b) => {
+      const aTime = commandTimestamps.get(a.name) || 0;
+      const bTime = commandTimestamps.get(b.name) || 0;
+
+      if (aTime === 0 && bTime === 0) {
+        return a.name.localeCompare(b.name);
+      }
+      if (aTime === 0) return 1;
+      if (bTime === 0) return -1;
+      return bTime - aTime;
+    });
+
+  const allCommands = [...favoritesList, ...nonFavoriteCommands];
 
   useInput((input, key) => {
     if (key.ctrl && input === 'c') {
@@ -20,7 +42,9 @@ export function CommandMenu({ commands, onSelect, onSwitchToSearch }: CommandMen
     }
 
     if (key.return) {
-      onSelect(commands[selectedIndex]);
+      if (allCommands.length > 0) {
+        onSelect(allCommands[selectedIndex]);
+      }
       return;
     }
 
@@ -35,35 +59,82 @@ export function CommandMenu({ commands, onSelect, onSwitchToSearch }: CommandMen
     }
 
     if (key.downArrow) {
-      setSelectedIndex(prev => (prev < commands.length - 1 ? prev + 1 : prev));
+      setSelectedIndex(prev => (prev < allCommands.length - 1 ? prev + 1 : prev));
       return;
     }
 
     if (/^[1-9]$/.test(input)) {
       const index = parseInt(input) - 1;
-      if (index >= 0 && index < commands.length) {
-        onSelect(commands[index]);
+      if (index >= 0 && index < allCommands.length) {
+        onSelect(allCommands[index]);
       }
+      return;
+    }
+
+    if (input === 'f' && allCommands.length > 0) {
+      const selectedCommand = allCommands[selectedIndex];
+      onToggleFavorite(selectedCommand.name);
+      return;
+    }
+
+    if (input === 'e') {
+      onEnterEdit();
       return;
     }
   });
 
+  const hasFavorites = favoritesList.length > 0;
+  const hasNonFavorites = nonFavoriteCommands.length > 0;
+
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="cyan" bold>Command Menu</Text>
+        <Text color="cyan" bold>My Commands</Text>
       </Box>
-      {commands.map((command, index) => (
-        <CommandItem
-          key={command.name}
-          command={command}
-          isSelected={index === selectedIndex}
-          index={index}
-        />
-      ))}
+
+      {hasFavorites && (
+        <>
+          <Box marginBottom={1}>
+            <Text color="yellow" bold>★ Favorites</Text>
+          </Box>
+          {favoritesList.map((command, index) => (
+            <CommandItem
+              key={command.name}
+              command={command}
+              isSelected={index === selectedIndex}
+              index={index}
+              isFavorite={true}
+            />
+          ))}
+        </>
+      )}
+
+      {hasFavorites && hasNonFavorites && (
+        <Box marginY={1}>
+          <Text dimColor>──────────────────────</Text>
+        </Box>
+      )}
+
+      {hasNonFavorites && (
+        <>
+          <Box marginBottom={1}>
+            <Text color="magenta" bold>All Commands</Text>
+          </Box>
+          {nonFavoriteCommands.map((command, index) => (
+            <CommandItem
+              key={command.name}
+              command={command}
+              isSelected={favoritesList.length + index === selectedIndex}
+              index={favoritesList.length + index}
+              isFavorite={false}
+            />
+          ))}
+        </>
+      )}
+
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: Navigate | Enter/1-9: Select | /: Search | Ctrl+C: Quit
+          ↑↓: Navigate | Enter/1-9: Select | f: Toggle favorite | e: Edit mode | /: Search | Ctrl+C: Quit
         </Text>
       </Box>
     </Box>

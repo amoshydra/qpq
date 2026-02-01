@@ -72,6 +72,16 @@ export async function loadRecent(allCommands: Command[]): Promise<Command[]> {
   }
 }
 
+export async function loadRecentWithTimestamps(): Promise<RecentCommand[]> {
+  try {
+    const content = await fs.promises.readFile(RECENT_COMMANDS_FILE, 'utf-8');
+    const recent: RecentCommand[] = JSON.parse(content);
+    return recent;
+  } catch {
+    return [];
+  }
+}
+
 export async function clearRecent(): Promise<void> {
   try {
     await fs.promises.unlink(RECENT_COMMANDS_FILE);
