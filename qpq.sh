@@ -15,12 +15,12 @@ exit_code=$?
 output=$(cat "$temp_file")
 rm -f "$temp_file"
 
-# If qpq exited successfully and printed a command, exec it
+# If qpq exited successfully and printed a command, eval it
 if [ $exit_code -eq 0 ] && [ -n "$output" ]; then
   # Extract command after __QEXEC__ marker
   command=$(echo "$output" | sed -n 's/^__QEXEC__ //p')
   if [ -n "$command" ]; then
-    eval "exec $command"
+    eval "$command"
   fi
 fi
 
