@@ -1,7 +1,8 @@
 #!/bin/sh
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve the real path of this script (handles symlinks from npm)
+SCRIPT_PATH="$(readlink -f "$0" || echo "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 
 # Run qpq and capture its output
 output=$(node "$SCRIPT_DIR/dist/index.js" "$@")
