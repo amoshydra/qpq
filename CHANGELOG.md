@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.11](https://github.com/amoshydra/qpq/compare/v0.0.10...v0.0.11) (2026-02-16)
+
+
+### Performance Improvements
+
+* optimize startup - parallelize file reads and lazy load components ([bfc4360](https://github.com/amoshydra/qpq/commit/bfc436038bdc0857179de3e9cf143d8e6710bfae))
+* switch config from YAML to JSON with lazy migration ([d95fed9](https://github.com/amoshydra/qpq/commit/d95fed94e338d623c770875eedb6d927646a3f76))
+
 ## [0.0.10](https://github.com/amoshydra/qpq/compare/v0.0.9...v0.0.10) (2026-02-16)
 
 
