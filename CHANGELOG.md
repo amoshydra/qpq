@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/amoshydra/qpq/compare/v0.0.6...v0.0.7) (2026-02-16)
+
+
+### Bug Fixes
+
+* resolve symlink path for npm-installed binary ([8101596](https://github.com/amoshydra/qpq/commit/81015964ee69724a202305cdf9f200f70d0742a6))
+
 ## [0.0.6](https://github.com/amoshydra/qpq/compare/v0.0.5...v0.0.6) (2026-02-16)
 
 
