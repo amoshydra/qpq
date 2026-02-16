@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/amoshydra/qpq/compare/v0.0.8...v0.0.9) (2026-02-16)
+
+
+### Bug Fixes
+
+* remove stdout redirect so Ink UI displays ([4daca4b](https://github.com/amoshydra/qpq/commit/4daca4bac5a41614b6d71457d710db14d1c0a3e8))
+
 ## [0.0.8](https://github.com/amoshydra/qpq/compare/v0.0.7...v0.0.8) (2026-02-16)
 
 
