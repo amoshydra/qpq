@@ -1,7 +1,6 @@
 import { Box, Text, useInput } from 'ink';
 import { useEffect, useState } from 'react';
 import type { Command } from '../types/command.js';
-import { captureShellHistorySubprocess, readHistoryFiles } from '../utils/shellHistory.js';
 import { CommandForm } from './CommandForm.js';
 
 interface AddCommandFormProps {
@@ -19,6 +18,7 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
   useEffect(() => {
     async function loadHistory() {
       try {
+        const { captureShellHistorySubprocess, readHistoryFiles } = await import('../utils/shellHistory.js');
         let commands = captureShellHistorySubprocess(40);
         if (commands.length === 0) {
           commands = await readHistoryFiles(40);
