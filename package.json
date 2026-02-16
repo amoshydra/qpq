@@ -5,7 +5,7 @@
   "main": "dist/cli.js",
   "type": "module",
   "bin": {
-    "qpq": "./dist/cli.js"
+    "qpq": "./qpq.sh"
   },
   "scripts": {
     "build": "tsc",
@@ -21,7 +21,8 @@
   "author": "",
   "files": [
     "sample-commands.yaml",
-    "dist"
+    "dist",
+    "qpq.sh"
   ],
   "license": "MIT",
   "dependencies": {

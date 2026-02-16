@@ -2,7 +2,6 @@ import { Box, Text, useApp } from 'ink';
 import { useEffect, useState } from 'react';
 import type { Command } from '../types/command.js';
 import { loadConfig, saveConfig } from '../utils/config.js';
-import { executeCommand } from '../utils/executor.js';
 import { isFavorite as isFavoriteUtil, loadFavorites, saveFavorites, toggleFavorite as toggleFavoriteUtil } from '../utils/favorites.js';
 import { clearRecent, loadRecent, loadRecentWithTimestamps, saveRecent } from '../utils/recent.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
@@ -112,7 +111,7 @@ export function App() {
     }
 
     await saveRecent(command);
-    executeCommand(command.command);
+    process.stdout.write(`__QEXEC__ ${command.command}\n`);
     exit();
   };
 
@@ -124,7 +123,7 @@ export function App() {
 
     await saveRecent(state.selectedCommand);
     const filledCommand = fillTemplate(state.selectedCommand.command, values);
-    executeCommand(filledCommand);
+    process.stdout.write(`__QEXEC__ ${filledCommand}\n`);
     exit();
   };
 
