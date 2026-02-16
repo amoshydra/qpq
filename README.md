@@ -176,6 +176,27 @@ pnpm run type-check  # TypeScript checks
 
 The wrapper ensures you see commands you just typed, working across all shell configurations.
 
+### Shell built changes
+
+When a command is executed via the wrapper, it runs in a subprocess. This means:
+
+- **Shell built-in commands** like `cd`, `export`, `alias` will work
+- **Environment changes won't persist** after the command exits - you'll return to the original directory and environment
+
+**Workaround**: If you need to change directory or set environment variables, append `$SHELL` to keep a new shell open:
+
+```yaml
+# Instead of:
+- name: "Go to project"
+  command: "cd /path/to/project"
+
+# Use:
+- name: "Go to project"
+  command: "cd /path/to/project; $SHELL"
+```
+
+This opens a new interactive shell in the target directory. Exit the shell to return to your original session.
+
 ### How does history capture work?
 
 Tries three methods (in order):
