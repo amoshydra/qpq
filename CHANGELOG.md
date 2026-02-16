@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/amoshydra/qpq/compare/v0.0.9...v0.0.10) (2026-02-16)
+
+
+### Bug Fixes
+
+* use eval for shell built-ins, update FAQ ([211f9af](https://github.com/amoshydra/qpq/commit/211f9af2993993adc840c365fced337ca7692e51))
+
 ## [0.0.9](https://github.com/amoshydra/qpq/compare/v0.0.8...v0.0.9) (2026-02-16)
 
 
