@@ -1,6 +1,6 @@
 {
   "name": "qpq",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A TUI launcher for frequently used commands",
   "main": "dist/cli.js",
   "type": "module",
