@@ -2,6 +2,11 @@
   "name": "qpq",
   "version": "0.0.6",
   "description": "A TUI launcher for frequently used commands",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amoshydra/qpq"
+  },
+  "homepage": "https://github.com/amoshydra/qpq",
   "main": "dist/cli.js",
   "type": "module",
   "bin": {
