@@ -8,7 +8,7 @@ SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 temp_file=$(mktemp)
 
 # Run qpq and capture stderr (where the command marker is written)
-node "$SCRIPT_DIR/dist/index.js" "$@" 2>"$temp_file" 1>&2
+node "$SCRIPT_DIR/dist/index.js" "$@" 2>"$temp_file"
 exit_code=$?
 
 # Read the captured command from temp file
