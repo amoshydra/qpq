@@ -1,7 +1,10 @@
 #!/bin/sh
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Run qpq and capture its output
-output=$(node dist/index.js "$@")
+output=$(node "$SCRIPT_DIR/dist/index.js" "$@")
 exit_code=$?
 
 # If qpq exited successfully and printed a command, exec it
