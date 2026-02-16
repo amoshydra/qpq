@@ -1,16 +1,17 @@
 import { Box, Text, useApp } from 'ink';
-import { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import type { Command } from '../types/command.js';
 import { loadConfig, saveConfig } from '../utils/config.js';
 import { isFavorite as isFavoriteUtil, loadFavorites, saveFavorites, toggleFavorite as toggleFavoriteUtil } from '../utils/favorites.js';
-import { clearRecent, loadRecent, loadRecentWithTimestamps, saveRecent } from '../utils/recent.js';
+import { clearRecent, loadRecentWithCommands, saveRecent } from '../utils/recent.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
-import { AddCommandForm } from './AddCommandForm.js';
 import { CommandMenu } from './CommandMenu.js';
-import { CommandSearch } from './CommandSearch.js';
-import { DeleteConfirmation } from './DeleteConfirmation.js';
-import { EditCommandForm } from './EditCommandForm.js';
-import { TemplatePrompt } from './TemplatePrompt.js';
+
+const AddCommandForm = lazy(() => import('./AddCommandForm.js').then(m => ({ default: m.AddCommandForm })));
+const CommandSearch = lazy(() => import('./CommandSearch.js').then(m => ({ default: m.CommandSearch })));
+const DeleteConfirmation = lazy(() => import('./DeleteConfirmation.js').then(m => ({ default: m.DeleteConfirmation })));
+const EditCommandForm = lazy(() => import('./EditCommandForm.js').then(m => ({ default: m.EditCommandForm })));
+const TemplatePrompt = lazy(() => import('./TemplatePrompt.js').then(m => ({ default: m.TemplatePrompt })));
 
 type AppMode = 'menu' | 'search' | 'template' | 'add' | 'edit_command';
 
@@ -45,14 +46,15 @@ export function App() {
   const refreshConfig = async () => {
     const config = await loadConfig();
     if (config) {
-      const recent = await loadRecent(config.commands);
-      const timestamps = await loadRecentWithTimestamps();
-      const timestampMap = new Map(timestamps.map(t => [t.name, t.timestamp]));
-      const favs = await loadFavorites();
+      const [recentData, favs] = await Promise.all([
+        loadRecentWithCommands(config.commands),
+        loadFavorites()
+      ]);
+      const timestampMap = new Map<string, number>(recentData.timestamps.map(t => [t.name, t.timestamp]));
       setState(prev => ({
         ...prev,
         commands: config.commands,
-        recentCommands: recent,
+        recentCommands: recentData.commands,
         commandTimestamps: timestampMap,
         favorites: favs,
       }));
@@ -72,15 +74,17 @@ export function App() {
           return;
         }
 
-        const recent = await loadRecent(config.commands);
-        const timestamps = await loadRecentWithTimestamps();
-        const timestampMap = new Map(timestamps.map(t => [t.name, t.timestamp]));
-        const favs = await loadFavorites();
+        const [recentData, favs] = await Promise.all([
+          loadRecentWithCommands(config.commands),
+          loadFavorites()
+        ]);
+
+        const timestampMap = new Map<string, number>(recentData.timestamps.map(t => [t.name, t.timestamp]));
 
         setState({
           mode: 'menu',
           commands: config.commands,
-          recentCommands: recent,
+          recentCommands: recentData.commands,
           commandTimestamps: timestampMap,
           favorites: favs,
           selectedCommand: null,
@@ -277,61 +281,71 @@ export function App() {
   if (state.mode === 'template' && state.selectedCommand) {
     const placeholders = extractPlaceholders(state.selectedCommand.command);
     return (
-      <TemplatePrompt
-        placeholders={placeholders}
-        onSubmit={handleTemplateSubmit}
-        onCancel={handleTemplateCancel}
-      />
+      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+        <TemplatePrompt
+          placeholders={placeholders}
+          onSubmit={handleTemplateSubmit}
+          onCancel={handleTemplateCancel}
+        />
+      </Suspense>
     );
   }
 
   if (state.mode === 'search') {
     return (
-      <CommandSearch
-        allCommands={state.commands!}
-        recentCommands={state.recentCommands}
-        favorites={state.favorites}
-        onSelect={handleSelectCommand}
-        onSwitchToMenu={handleSwitchToMenu}
-      />
+      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+        <CommandSearch
+          allCommands={state.commands!}
+          recentCommands={state.recentCommands}
+          favorites={state.favorites}
+          onSelect={handleSelectCommand}
+          onSwitchToMenu={handleSwitchToMenu}
+        />
+      </Suspense>
     );
   }
 
   if (state.mode === 'add') {
     return (
-      <AddCommandForm
-        existingCommands={state.commands!}
-        onSubmit={handleAddCommand}
-        onCancel={handleAddCancel}
-      />
+      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+        <AddCommandForm
+          existingCommands={state.commands!}
+          onSubmit={handleAddCommand}
+          onCancel={handleAddCancel}
+        />
+      </Suspense>
     );
   }
 
   if (state.mode === 'edit_command' && state.editingCommand) {
     return (
-      <EditCommandForm
-        command={state.editingCommand}
-        existingCommands={state.commands!}
-        onSubmit={handleEditSubmit}
-        onCancel={handleCommandEditCancel}
-      />
+      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+        <EditCommandForm
+          command={state.editingCommand}
+          existingCommands={state.commands!}
+          onSubmit={handleEditSubmit}
+          onCancel={handleCommandEditCancel}
+        />
+      </Suspense>
     );
   }
 
   if (state.showDeleteConfirm && state.deleteCommand) {
     return (
-      <DeleteConfirmation
-        key="delete-confirmation"
-        command={state.deleteCommand}
-        onConfirm={() => {
-          handleHideDeleteConfirm();
-          const commandName = state.deleteCommand?.name;
-          if (commandName) {
-            handleDeleteCommand(commandName);
-          }
-        }}
-        onCancel={handleHideDeleteConfirm}
-      />
+      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+        <DeleteConfirmation
+          key="delete-confirmation"
+          command={state.deleteCommand}
+          onConfirm={() => {
+            handleHideDeleteConfirm();
+            const commandName = state.deleteCommand?.name;
+            if (commandName) {
+              handleDeleteCommand(commandName);
+            }
+          }}
+          onCancel={handleHideDeleteConfirm}
+        />
+      </Suspense>
     );
   }
 

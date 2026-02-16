@@ -47,26 +47,29 @@ export async function saveRecent(command: Command): Promise<void> {
   await fs.promises.writeFile(RECENT_COMMANDS_FILE, JSON.stringify(recent, null, 2));
 }
 
-export async function loadRecent(allCommands: Command[]): Promise<Command[]> {
+export async function loadRecentWithCommands(allCommands: Command[]): Promise<{
+  commands: Command[];
+  timestamps: RecentCommand[];
+}> {
   try {
     const content = await fs.promises.readFile(RECENT_COMMANDS_FILE, 'utf-8');
     const recent: RecentCommand[] = JSON.parse(content);
 
     const recentCommands = recent.map(r => allCommands.find(c => c.name === r.name)).filter(Boolean) as Command[];
-    return recentCommands;
+    return { commands: recentCommands, timestamps: recent };
   } catch {
-    return [];
+    return { commands: [], timestamps: [] };
   }
 }
 
+export async function loadRecent(allCommands: Command[]): Promise<Command[]> {
+  const result = await loadRecentWithCommands(allCommands);
+  return result.commands;
+}
+
 export async function loadRecentWithTimestamps(): Promise<RecentCommand[]> {
-  try {
-    const content = await fs.promises.readFile(RECENT_COMMANDS_FILE, 'utf-8');
-    const recent: RecentCommand[] = JSON.parse(content);
-    return recent;
-  } catch {
-    return [];
-  }
+  const result = await loadRecentWithCommands([]);
+  return result.timestamps;
 }
 
 export async function clearRecent(): Promise<void> {
