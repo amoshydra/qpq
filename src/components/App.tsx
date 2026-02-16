@@ -111,7 +111,7 @@ export function App() {
     }
 
     await saveRecent(command);
-    process.stdout.write(`__QEXEC__ ${command.command}\n`);
+    process.stderr.write(`__QEXEC__ ${command.command}\n`);
     exit();
   };
 
@@ -123,7 +123,7 @@ export function App() {
 
     await saveRecent(state.selectedCommand);
     const filledCommand = fillTemplate(state.selectedCommand.command, values);
-    process.stdout.write(`__QEXEC__ ${filledCommand}\n`);
+    process.stderr.write(`__QEXEC__ ${filledCommand}\n`);
     exit();
   };
 
