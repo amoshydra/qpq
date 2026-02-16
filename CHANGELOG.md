@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/amoshydra/qpq/compare/v0.0.5...v0.0.6) (2026-02-16)
+
+
+### Bug Fixes
+
+* resolve dist path relative to script location ([855f492](https://github.com/amoshydra/qpq/commit/855f492900e703147aaf8aa2c055b9cba0459aa4))
+
 ## [0.0.5](https://github.com/amoshydra/qpq/compare/v0.0.4...v0.0.5) (2026-02-16)
 
 
