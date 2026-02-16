@@ -25,7 +25,7 @@
   ],
   "author": "",
   "files": [
-    "sample-commands.yaml",
+    "sample-commands.json",
     "dist",
     "qpq.sh"
   ],
