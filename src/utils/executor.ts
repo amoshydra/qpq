@@ -5,15 +5,8 @@ export function executeCommand(command: string): void {
   const result = spawn(command, [], {
     shell: true,
     stdio: 'inherit',
-    detached: false,
+    detached: true,
   });
 
-  result.on('exit', (code) => {
-    process.exit(code ?? 0);
-  });
-
-  result.on('error', (error) => {
-    console.error('Command failed:', error);
-    process.exit(1);
-  });
+  result.unref();
 }

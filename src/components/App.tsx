@@ -113,6 +113,7 @@ export function App() {
 
     await saveRecent(command);
     executeCommand(command.command);
+    exit();
   };
 
   const handleTemplateSubmit = async (values: Record<string, string>) => {
@@ -124,6 +125,7 @@ export function App() {
     await saveRecent(state.selectedCommand);
     const filledCommand = fillTemplate(state.selectedCommand.command, values);
     executeCommand(filledCommand);
+    exit();
   };
 
   const handleSwitchToSearch = () => {
