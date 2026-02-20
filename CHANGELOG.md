@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/amoshydra/qpq/compare/v0.1.0...v0.1.1) (2026-02-20)
+
+
+### Performance Improvements
+
+* optimize startup performance ([efd906c](https://github.com/amoshydra/qpq/commit/efd906ca333d02c9a4981f6da1e577ff3c202949))
+
 ## [0.1.0](https://github.com/amoshydra/qpq/compare/v0.0.11...v0.1.0) (2026-02-20)
 
 
