@@ -1,5 +1,9 @@
 # QPQ
 
+[![npm](https://img.shields.io/npm/v/qpq.svg)](https://www.npmjs.com/package/qpq)
+[![License](https://img.shields.io/github/license/amoshydra/qpq.svg)](LICENSE)
+[![GitHub](https://img.shields.io/github/stars/amoshydra/qpq.svg)](https://github.com/amoshydra/qpq)
+
 A terminal-based command launcher for frequently used commands. Built with TypeScript, React, and Ink.
 
 ## Features
