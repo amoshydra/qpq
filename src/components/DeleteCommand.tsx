@@ -21,7 +21,7 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
       return;
     }
 
-    if (key.escape || input === 'q') {
+    if (key.escape) {
       if (stage === 'select') {
         onCancel();
       } else {
@@ -89,7 +89,7 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
           </Box>
           <Box marginTop={1}>
             <Text dimColor>
-              Press Escape/q to cancel
+              Press Escape to cancel
             </Text>
           </Box>
         </Box>
@@ -122,7 +122,7 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
         
         <Box marginTop={1}>
           <Text dimColor>
-            ↑↓: Navigate | Enter/1-9: Select | Escape/q: Cancel
+            ↑↓: Navigate | Enter/1-9: Select | Escape: Cancel
           </Text>
         </Box>
       </Box>
@@ -148,7 +148,7 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
       </Box>
       
       <Box marginTop={1}>
-        <Text dimColor>[Enter/Y] Confirm | [N] Cancel | Escape/q: Back</Text>
+        <Text dimColor>[Enter/Y] Confirm | [N] Cancel | Escape: Back</Text>
       </Box>
     </Box>
   );

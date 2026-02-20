@@ -36,7 +36,7 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
       return;
     }
 
-    if (key.escape || input === 'q') {
+    if (key.escape) {
       onCancel();
       return;
     }
@@ -97,7 +97,7 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
         )}
         
         <Box marginTop={1}>
-          <Text dimColor>↑↓: Navigate | Enter: Select | n: New command | Escape/q: Cancel</Text>
+          <Text dimColor>↑↓: Navigate | Enter: Select | n: New command | Escape: Cancel</Text>
         </Box>
       </Box>
     );

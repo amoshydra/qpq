@@ -19,10 +19,24 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 
 ## Installation
 
+### Try instantly (no install)
+```bash
+npx qpq
+```
+
+### Global install
+```bash
+npm i -g qpq
+qpq
+```
+
+### From source (development)
 ```bash
 pnpm install
 pnpm run build
-pnpm link  # Optional: Symlink for global use
+node dist/index.js
+# or
+npx .
 ```
 
 ## Usage
@@ -58,7 +72,7 @@ node dist/index.js
 | Type | Search query |
 | ↓↑ | Navigate results |
 | Enter / 1-9 | Select command |
-| Escape / q | Return to menu |
+| Escape | Return to menu |
 | Backspace | Delete character |
 | Ctrl+C | Quit |
 
@@ -69,7 +83,7 @@ node dist/index.js
 | ↓↑ | Navigate history |
 | Enter | Select command from history |
 | n | Skip to new command form |
-| Escape / q | Cancel |
+| Escape | Cancel |
 
 #### Add/Edit Command Form
 
@@ -95,7 +109,7 @@ node dist/index.js
 | Key | Action |
 |-----|--------|
 | y / Y / Enter | Confirm deletion |
-| n / N / q / Escape | Cancel |
+| n / N / Escape | Cancel |
 
 ### Config File
 

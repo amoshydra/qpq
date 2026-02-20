@@ -22,7 +22,7 @@ export function DeleteConfirmation({ command, onConfirm, onCancel }: DeleteConfi
     }
 
     // Cancel deletion
-    if (input === 'n' || input === 'N' || input === 'q' || key.escape) {
+    if (input === 'n' || input === 'N' || key.escape) {
       onCancel();
       return;
     }

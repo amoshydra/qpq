@@ -36,7 +36,7 @@ export function CommandSearch({ allCommands, recentCommands, favorites, onSelect
       return;
     }
 
-    if (key.escape || input === 'q') {
+    if (key.escape) {
       onSwitchToMenu();
       return;
     }
@@ -102,7 +102,7 @@ export function CommandSearch({ allCommands, recentCommands, favorites, onSelect
       )}
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: Navigate | Enter/1-9: Select | Escape/q: Menu | Ctrl+C: Quit
+          ↑↓: Navigate | Enter/1-9: Select | Escape: Menu | Ctrl+C: Quit
         </Text>
       </Box>
     </Box>
