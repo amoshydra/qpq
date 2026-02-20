@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0](https://github.com/amoshydra/qpq/compare/v0.0.11...v0.1.0) (2026-02-20)
+
+
+### Features
+
+* add arrow key navigation to command form ([046f389](https://github.com/amoshydra/qpq/commit/046f389bcaff438a6a8472f0612ec0150f5b7ee6))
+
+
+### Bug Fixes
+
+* only publish npm on release pr merge, add ci workflow ([5433ef5](https://github.com/amoshydra/qpq/commit/5433ef592a7d2883c4bc3960cb6b067125d40007))
+
 ## [0.0.11](https://github.com/amoshydra/qpq/compare/v0.0.10...v0.0.11) (2026-02-16)
 
 
