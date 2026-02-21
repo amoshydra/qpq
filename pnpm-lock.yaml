@@ -11,6 +11,9 @@ importers:
       ink:
         specifier: ^6.6.0
         version: 6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4)
+      ink-scroll-list:
+        specifier: ^0.4.1
+        version: 0.4.1(ink@6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4))(react@19.2.4)
       ink-text-input:
         specifier: ^6.0.0
         version: 6.0.0(ink@6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4))(react@19.2.4)
@@ -518,6 +521,18 @@ packages:
   indent-string@5.0.0:
     resolution: {integrity: sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg==}
     engines: {node: '>=12'}
+
+  ink-scroll-list@0.4.1:
+    resolution: {integrity: sha512-2GcjnBXRe0sTSMC03SCKX6IkNAsYYgcpvAN+ggAiaqeg+s+qA9Ls0iVTOmB+Ize/9AVts8xloG4aRcrOy/7Xxg==}
+    peerDependencies:
+      ink: '>=6'
+      react: '>=19'
+
+  ink-scroll-view@0.3.6:
+    resolution: {integrity: sha512-XqLkmFFCA5Ow2lVyvv7q0aVHzB78XojIM8gZMQ3//lvy8ZDpJsXWtTRwsCEsdQHnwvMCDCnKCzgF4xkkzoN8mQ==}
+    peerDependencies:
+      ink: ^5 || ^6
+      react: ^18 || ^19
 
   ink-text-input@6.0.0:
     resolution: {integrity: sha512-Fw64n7Yha5deb1rHY137zHTAbSTNelUKuB5Kkk2HACXEtwIHBCf9OH2tP/LQ9fRYTl1F0dZgbW0zPnZk6FA9Lw==}
@@ -1159,6 +1174,17 @@ snapshots:
       resolve-pkg-maps: 1.0.0
 
   indent-string@5.0.0: {}
+
+  ink-scroll-list@0.4.1(ink@6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4))(react@19.2.4):
+    dependencies:
+      ink: 6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4)
+      ink-scroll-view: 0.3.6(ink@6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+
+  ink-scroll-view@0.3.6(ink@6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4))(react@19.2.4):
+    dependencies:
+      ink: 6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4)
+      react: 19.2.4
 
   ink-text-input@6.0.0(ink@6.6.0(@types/react@19.2.10)(react-devtools-core@6.1.5)(react@19.2.4))(react@19.2.4):
     dependencies:

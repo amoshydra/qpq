@@ -1,5 +1,6 @@
 import { Box, Text, useInput } from 'ink';
-import { useEffect, useState } from 'react';
+import { ScrollList, type ScrollListRef } from 'ink-scroll-list';
+import { useEffect, useRef, useState } from 'react';
 import type { Command } from '../types/command.js';
 import { CommandForm } from './CommandForm.js';
 
@@ -10,6 +11,7 @@ interface AddCommandFormProps {
 }
 
 export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddCommandFormProps) {
+  const listRef = useRef<ScrollListRef>(null);
   const [stage, setStage] = useState<'history' | 'form'>('history');
   const [historyCommands, setHistoryCommands] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -76,26 +78,28 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
         <Box marginBottom={1}>
           <Text color="cyan" bold>Add Command - Shell History</Text>
         </Box>
-        
+
         {displayCommands.length > 0 ? (
-          <>
-            {displayCommands.map((cmd, idx) => (
-              <Box key={cmd}>
-                <Box width={4}>
-                  <Text color={idx === historyIndex ? 'green' : 'gray'}>{idx + 1}.</Text>
+          <Box borderStyle="single" height={10}>
+            <ScrollList ref={listRef} selectedIndex={historyIndex}>
+              {displayCommands.map((cmd, idx) => (
+                <Box key={cmd}>
+                  <Box width={4}>
+                    <Text color={idx === historyIndex ? 'green' : 'gray'}>{idx + 1}.</Text>
+                  </Box>
+                  <Box>
+                    <Text inverse={idx === historyIndex} color={idx === historyIndex ? 'green' : undefined}>{cmd}</Text>
+                  </Box>
                 </Box>
-                <Box>
-                  <Text inverse={idx === historyIndex} color={idx === historyIndex ? 'green' : undefined}>{cmd}</Text>
-                </Box>
-              </Box>
-            ))}
-          </>
+              ))}
+            </ScrollList>
+          </Box>
         ) : (
           <Box>
             <Text dimColor>No command history found</Text>
           </Box>
         )}
-        
+
         <Box marginTop={1}>
           <Text dimColor>↑↓: Navigate | Enter: Select | n: New command | Escape: Cancel</Text>
         </Box>
