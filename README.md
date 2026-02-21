@@ -46,6 +46,7 @@ npx .
 ```bash
 qpq --version  # Show version
 qpq -v         # Show version (short form)
+qpq --paths    # Show configuration paths
 ```
 
 ### Interactive Mode
