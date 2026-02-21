@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
-import { CommandItem } from './CommandItem.js';
-import { fuzzySearch } from '../utils/fuzzySearch.js';
+import { Box, Text, useApp, useInput } from 'ink';
+import { useState } from 'react';
 import type { Command } from '../types/command.js';
+import { fuzzySearch } from '../utils/search.js';
+import { CommandItem } from './CommandItem.js';
 
 interface CommandSearchProps {
   allCommands: Command[];

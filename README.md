@@ -12,7 +12,7 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 - **Favorites**: Pin frequently used commands at the top (press `f` to toggle)
 - **All Commands**: Sorted by recency - recently used commands appear first
 - **Direct Actions**: Add, edit, or delete commands directly from the menu
-- **Search Mode**: Real-time fuzzy search through all commands
+- **Search Mode**: Real-time string search through all commands
 - **Template Support**: Command placeholders that prompt for values
 - **Platform Aware**: Works on Linux, macOS, and Windows
 - **Auto-init**: Creates config directory and sample file if missing

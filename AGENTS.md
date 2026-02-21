@@ -213,14 +213,13 @@ commands:
 
 - `ink` v6 - React for terminal UIs
 - `react` v19 - UI library
-- `fuse.js` - Fuzzy search implementation
 - `js-yaml` - YAML parsing
 - `ink-text-input` - Text input handling
 
 ### Application Modes
 
 - `menu` - Main command menu
-- `search` - Search mode (fuzzy search)
+- `search` - Search mode (string search)
 - `template` - Template variable prompting
 - `add` - Add new command form
 - `delete` - Delete command confirmation
