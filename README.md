@@ -41,6 +41,13 @@ npx .
 
 ## Usage
 
+### Command Line Flags
+
+```bash
+qpq --version  # Show version
+qpq -v         # Show version (short form)
+```
+
 ### Interactive Mode
 
 ```bash
