@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.2](https://github.com/amoshydra/qpq/compare/v0.1.1...v0.1.2) (2026-02-21)
+
+
+### Features
+
+* **cli:** add configuration paths flag ([1c15d6a](https://github.com/amoshydra/qpq/commit/1c15d6aa82d2a554b23c6ae991a1176f168e3b85))
+* **cli:** add version flag support ([ce21ae4](https://github.com/amoshydra/qpq/commit/ce21ae4288983cc9df87eedf3069cc5c1b34ae2a))
+* **ui:** add fullscreen mode to CLI and index components ([72ec8c0](https://github.com/amoshydra/qpq/commit/72ec8c0c31adf53b1c0a7d9f953b3a9e399d0244))
+* **ui:** add scrollable command history list ([dfdfede](https://github.com/amoshydra/qpq/commit/dfdfede6ab2eae3dee63292b20168f88e106f085))
+
+
+### Bug Fixes
+
+* replace fuse.js with simpler string search implementation ([73e0f97](https://github.com/amoshydra/qpq/commit/73e0f97278e8948854ca729b9a444bbe6d1e9997))
+* **ui:** restore terminal cursor position after shell history capture ([815f805](https://github.com/amoshydra/qpq/commit/815f805f8c3defab2bb460e42ccf48458ce7ed05))
+* **ui:** update command menu input handling ([b99af41](https://github.com/amoshydra/qpq/commit/b99af4175287dbb94e2f1a8a69c58dd51f406033))
+
+
+### Miscellaneous Chores
+
+* force patch release 0.1.2 ([3f78cd8](https://github.com/amoshydra/qpq/commit/3f78cd8958b72aafab64b62c5eee7f439083f04a))
+
 ## [0.1.1](https://github.com/amoshydra/qpq/compare/v0.1.0...v0.1.1) (2026-02-20)
 
 
