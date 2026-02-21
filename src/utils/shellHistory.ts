@@ -76,7 +76,7 @@ function dedupeCommandsKeepNewest(commands: string[]): string[] {
 
 export function captureShellHistorySubprocess(count: number = 40): string[] {
   const shell = detectShell();
-
+  process.stdout.write('\x1b[s'); // Save position
   try {
     let output = '';
 
@@ -106,10 +106,12 @@ export function captureShellHistorySubprocess(count: number = 40): string[] {
     } else {
       commands = output.trim().split('\n').filter(Boolean).reverse();
     }
-
     return dedupeCommands(commands);
   } catch {
     return [];
+  } finally {
+    // Exec cause terminal to be offset by 1, below command force terminal to move up by 1
+    process.stdout.write('\x1b[u'); // Restore position
   }
 }
 
