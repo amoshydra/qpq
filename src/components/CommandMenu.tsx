@@ -40,7 +40,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
   const allCommands = [...favoritesList, ...nonFavoriteCommands];
 
   useInput((input, key) => {
-    if (key.ctrl && input === 'c') {
+    if (key.escape || key.ctrl && input === 'c') {
       exit();
       return;
     }
@@ -52,7 +52,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
       return;
     }
 
-    if (key.escape || input === '/') {
+    if (input === '/') {
       onSwitchToSearch();
       return;
     }
