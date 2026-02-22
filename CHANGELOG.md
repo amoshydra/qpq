@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.4](https://github.com/amoshydra/qpq/compare/v0.2.3...v0.2.4) (2026-02-22)
+
+
+### Features
+
+* allow Enter key to navigate fields in CommandForm ([984dddd](https://github.com/amoshydra/qpq/commit/984dddd9db6ac64b3d796b64767830124afc6a61))
+* rewrite TemplatePrompt to use ink-text-input ([2c0dfc3](https://github.com/amoshydra/qpq/commit/2c0dfc390a8596640bb51157b3df2250578c3f0e))
+
+
+### Bug Fixes
+
+* remove Tab/Shift+Tab navigation ([13a37a6](https://github.com/amoshydra/qpq/commit/13a37a62e07ac928c600d97a1561f3044fa96f11))
+
+
+### Miscellaneous Chores
+
+* release as 0.2.4 ([bdd568c](https://github.com/amoshydra/qpq/commit/bdd568ce54a7ca38ca74f8eb7a3d36622d779293))
+
 ## [0.2.3](https://github.com/amoshydra/qpq/compare/v0.2.2...v0.2.3) (2026-02-22)
 
 
