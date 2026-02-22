@@ -9,7 +9,7 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 <center>
 
 ![output](https://github.com/user-attachments/assets/0d3bb1a6-77f9-4cfa-ab92-45a499dc7cd2)
-   
+
 </center>
 
 ## Features
@@ -27,7 +27,7 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 | :-:  | :-: |
 | ![readme-001-output](https://github.com/user-attachments/assets/21d6f8c6-052f-48b4-89b3-5352f72d94ca) | ![readme-002-add](https://github.com/user-attachments/assets/372d67b9-2591-41ca-8a0b-6a9a87f55161)
 | **Edit mode** | **Favorites**
-| ![readme-003-edit](https://github.com/user-attachments/assets/73bb8e8a-7c40-47f2-b2bc-a29425a2d9a3) | ![readme-004-favorite](https://github.com/user-attachments/assets/18aeb419-ac7f-4c43-acde-b7b5d716f99a) | 
+| ![readme-003-edit](https://github.com/user-attachments/assets/73bb8e8a-7c40-47f2-b2bc-a29425a2d9a3) | ![readme-004-favorite](https://github.com/user-attachments/assets/18aeb419-ac7f-4c43-acde-b7b5d716f99a) |
 
 
 
@@ -107,10 +107,10 @@ qpq --paths      # Show configuration paths
 
 | Key | Action |
 |-----|--------|
-| Type | Enter value for current placeholder |
-| Enter | Next placeholder or submit (if last) |
-| Backspace | Delete character |
-| Ctrl+L | Cancel |
+| Type | Enter value for current field |
+| ↓↑ | Navigate between fields |
+| Enter | Next field or submit (if last) |
+| Escape | Cancel |
 
 #### Delete Confirmation
 
@@ -189,7 +189,7 @@ Use `{placeholder}` syntax for dynamic values:
 }
 ```
 
-When you select a command with placeholders, you'll be prompted to enter each value. Use `Ctrl+L` to cancel.
+When you select a command with placeholders, you'll be prompted to enter each value. Use `Escape` to cancel.
 
 ## Development
 

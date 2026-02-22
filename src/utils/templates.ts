@@ -10,5 +10,5 @@ export function extractPlaceholders(template: string): string[] {
 }
 
 export function fillTemplate(template: string, values: Record<string, string>): string {
-  return template.replace(PLACEHOLDER_REGEX, (_, key) => values[key] || `{${key}}`);
+  return template.replace(PLACEHOLDER_REGEX, (_, key) => values[key] === undefined ? `{${key}}` : values[key]);
 }

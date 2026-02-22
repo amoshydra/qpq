@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
-import type { Command } from '../types/command.js';
+import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
+import { useState } from 'react';
 
 interface TemplatePromptProps {
   placeholders: string[];
@@ -10,23 +10,21 @@ interface TemplatePromptProps {
 
 export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePromptProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [values, setValues] = useState<Record<string, string>>({});
-  const { exit } = useApp();
+  const [values, setValues] = useState<string[]>(new Array(placeholders.length).fill(''));
 
-  const currentPlaceholder = placeholders[currentIndex];
-  const currentValue = values[currentPlaceholder] || '';
-
-  useInput((input, key) => {
-    if (key.escape || (key.ctrl && input === 'l')) {
+  useInput((_, key) => {
+    if (key.escape) {
       onCancel();
       return;
     }
 
-    if (input) {
-      setValues(prev => ({
-        ...prev,
-        [currentPlaceholder]: currentValue + input,
-      }));
+    if (key.upArrow) {
+      setCurrentIndex(prev => (prev > 0 ? prev - 1 : placeholders.length - 1));
+      return;
+    }
+
+    if (key.downArrow) {
+      setCurrentIndex(prev => (prev < placeholders.length - 1 ? prev + 1 : 0));
       return;
     }
 
@@ -34,41 +32,43 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
       if (currentIndex < placeholders.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        onSubmit(values);
-        exit();
+        const result: Record<string, string> = {};
+        placeholders.forEach((p, i) => {
+          result[p] = values[i];
+        });
+        onSubmit(result);
       }
-      return;
-    }
-
-    if (key.backspace || key.delete) {
-      setValues(prev => ({
-        ...prev,
-        [currentPlaceholder]: currentValue.slice(0, -1),
-      }));
       return;
     }
   });
 
+  function handleChange(value: string) {
+    setValues(prev => {
+      const newValues = [...prev];
+      newValues[currentIndex] = value;
+      return newValues;
+    });
+  }
+
   return (
     <Box flexDirection="column">
-      <Box>
-        <Text color="cyan">Enter {placeholders[currentIndex]}:</Text>
-        <Text> </Text>
-        <Text inverse>{currentValue}</Text>
-        <Text inverse color="bgMagenta"> </Text>
+      <Box marginBottom={1}>
+        <Text color="cyan" bold>Template Variables</Text>
       </Box>
+
+      {placeholders.map((placeholder, index) => (
+        <Box key={placeholder}>
+          <Text color={index === currentIndex ? 'green' : 'gray'}>{placeholder}: </Text>
+          <TextInput
+            value={values[index]}
+            onChange={handleChange}
+            focus={index === currentIndex}
+          />
+        </Box>
+      ))}
+
       <Box marginTop={1}>
-        <Text dimColor>
-          {placeholders.map((p, i) => (
-            <Text key={p} color={i === currentIndex ? 'green' : 'gray'}>
-              {i > 0 && ' > '}
-              {p}
-            </Text>
-          ))}
-        </Text>
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>Ctrl+L to cancel</Text>
+        <Text dimColor>↑/↓ to navigate | Escape to cancel | Enter on last field to submit</Text>
       </Box>
     </Box>
   );
