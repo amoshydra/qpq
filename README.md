@@ -219,16 +219,13 @@ pnpm run build
 
 The wrapper ensures you see commands you just typed, working across all shell configurations.
 
-### Shell built changes
+### Why don't directory changes persist after running a command?
 
-When a command is executed via the wrapper, it runs in a subprocess. This means:
+When you select a command from qpq, it runs in a subprocess. Commands like `cd`, `export`, `alias` (which modify the environment) will take effect in the subprocess. **Environment changes won't persist** after the command exits - you'll return to the original directory and environment.
 
-- **Shell built-in commands** like `cd`, `export`, `alias` will work
-- **Environment changes won't persist** after the command exits - you'll return to the original directory and environment
+**Workaround**: Append `$SHELL` to keep a new shell open:
 
-**Workaround**: If you need to change directory or set environment variables, append `$SHELL` to keep a new shell open:
-
-```json
+```jsonc
 // Instead of:
 {
   "name": "Go to project",
