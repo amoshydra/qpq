@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/amoshydra/qpq/compare/v0.2.2...v0.2.3) (2026-02-22)
+
+
+### Miscellaneous Chores
+
+* release as 0.2.3 ([3fe024c](https://github.com/amoshydra/qpq/commit/3fe024c005836702d23fc6b7760b4e357d2217b3))
+
 ## [0.2.2](https://github.com/amoshydra/qpq/compare/v0.2.1...v0.2.2) (2026-02-22)
 
 
