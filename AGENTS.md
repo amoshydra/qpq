@@ -201,7 +201,7 @@ async function initConfigFile(configPath: string): Promise<void> {
 ### Data Files
 
 - **Config file:** JSON format with `commands`, `favorites`, and `recent` array root
-- **Sample file:** `src/data/sample-commands.json` - provides default commands
+- **Sample file:** `src/utils/sample-commands.ts` - provides default commands (bundled at build time)
 
 **Sample command format:**
 ```json
