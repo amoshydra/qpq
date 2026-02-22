@@ -98,8 +98,6 @@ qpq --paths      # Show configuration paths
 | Key | Action |
 |-----|--------|
 | Type | Enter text in current field |
-| Tab | Next field |
-| Shift+Tab | Previous field |
 | ↑/↓ | Navigate fields |
 | Enter | Next field or submit (if last) |
 | Escape | Cancel |
@@ -143,7 +141,7 @@ The menu shows commands in this order:
 2. Browse shell history (last 30 commands) and press `Enter` to select, OR
 3. Press `n` to skip to the new command form
 4. Fill in the form (Command is mandatory, other fields optional)
-5. Use `Tab` to navigate between fields
+5. Use `↑/↓` to navigate between fields
 6. Press `Enter` on the Tags field to submit
 
 ### Editing Commands
@@ -151,7 +149,7 @@ The menu shows commands in this order:
 1. Select a command in the menu
 2. Press `e` to open Edit Command form
 3. Modify the fields as needed
-4. Use `Tab` to navigate between fields
+4. Use `↑/↓` to navigate between fields
 5. Press `Enter` on the Tags field to submit
 
 **Note**: If you change the command name, favorites and recent usage are automatically updated.

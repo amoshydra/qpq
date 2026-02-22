@@ -21,10 +21,6 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
   useInput((_, key) => {
     if (key.escape) {
       onCancel();
-    } else if (key.tab) {
-      nextField();
-    } else if (key.shift && key.tab) {
-      prevField();
     } else if (key.upArrow) {
       prevField();
     } else if (key.downArrow) {
@@ -130,7 +126,7 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
       </Box>
 
       <Box marginTop={1}>
-        <Text dimColor>↑/↓ or Tab/Shift+Tab to navigate | Escape to cancel | Enter on last field to submit</Text>
+        <Text dimColor>↑/↓ to navigate | Escape to cancel | Enter on last field to submit</Text>
       </Box>
     </Box>
   );
