@@ -15,8 +15,12 @@ pnpm install          # Install dependencies
 pnpm run dev          # Dev mode (auto-reload with tsx)
 pnpm run build        # Build for production
 pnpm run type-check   # TypeScript check
+pnpm run test         # Run tests
 pnpm start            # Run built app
 ```
+
+**Pre-push Hook:**
+A husky pre-commit hook runs `type-check`, `build`, and `test` before committing. The pre-push hook also runs these checks before pushing.
 
 **Build Output:**
 - Built files are output to `dist/` directory

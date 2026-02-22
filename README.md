@@ -35,8 +35,6 @@ qpq
 pnpm install
 pnpm run build
 node dist/index.js
-# or
-npx .
 ```
 
 ## Usage
@@ -44,9 +42,12 @@ npx .
 ### Command Line Flags
 
 ```bash
-qpq --version  # Show version
-qpq -v         # Show version (short form)
-qpq --paths    # Show configuration paths
+qpq              # Launch interactive menu (default)
+qpq --help       # Show help message
+qpq -h           # Show help message (short form)
+qpq --version    # Show version number
+qpq -v           # Show version number (short form)
+qpq --paths      # Show configuration paths
 ```
 
 ### Interactive Mode
@@ -194,10 +195,14 @@ When you select a command with placeholders, you'll be prompted to enter each va
 ## Development
 
 ```bash
-pnpm run dev      # Run with tsx (auto-reload)
-pnpm run build    # Compile to dist/
+pnpm install         # Install dependencies
+pnpm run dev         # Run with tsx (auto-reload)
+pnpm run build       # Compile to dist/
 pnpm run type-check  # TypeScript checks
+pnpm run test        # Run tests
 ```
+
+**Note**: A husky pre-commit hook runs `type-check`, `build`, and `test` before committing.
 
 ## FAQ
 
