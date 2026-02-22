@@ -1,8 +1,9 @@
 import { Box, Text, useApp } from 'ink';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import type { Command } from '../types/command.js';
-import { clearRecent, isFavorite as isFavoriteUtil, loadConfig, loadFavorites, loadRecentWithCommands, saveConfig, saveFavorites, saveRecent, toggleFavorite as toggleFavoriteUtil } from '../utils/config.js';
+import { clearRecent, loadConfig, loadFavorites, loadRecentWithCommands, saveConfig, saveFavorites, saveRecent, toggleFavorite as toggleFavoriteUtil } from '../utils/config.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
+import { startPreloading, preloadUrgent } from '../utils/preload.js';
 import { CommandMenu } from './CommandMenu.js';
 
 const AddCommandForm = lazy(() => import('./AddCommandForm.js').then(m => ({ default: m.AddCommandForm })));
@@ -94,6 +95,12 @@ You can fix this by:
           showDeleteConfirm: false,
           deleteCommand: null,
         });
+
+        const hasTemplates = config.commands.some(cmd =>
+          extractPlaceholders(cmd.command).length > 0
+        );
+        startPreloading(hasTemplates);
+
         setLoading(false);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load config');
@@ -108,6 +115,7 @@ You can fix this by:
     const placeholders = extractPlaceholders(command.command);
 
     if (placeholders.length > 0) {
+      preloadUrgent('TemplatePrompt');
       setState(prev => ({
         ...prev,
         mode: 'template',
@@ -134,6 +142,7 @@ You can fix this by:
   };
 
   const handleSwitchToSearch = () => {
+    preloadUrgent('CommandSearch');
     setState(prev => ({ ...prev, mode: 'search' }));
   };
 
@@ -173,6 +182,7 @@ You can fix this by:
   };
 
   const handleEditCommand = (command: Command) => {
+    preloadUrgent('EditCommandForm');
     setState(prev => ({
       ...prev,
       mode: 'edit_command',
@@ -242,6 +252,7 @@ You can fix this by:
   const handleShowDeleteConfirm = (commandId: number) => {
     const command = state.commands?.find(cmd => cmd.id === commandId) ?? null;
     if (command) {
+      preloadUrgent('DeleteConfirmation');
       setState(prev => ({
         ...prev,
         showDeleteConfirm: true,
@@ -256,6 +267,11 @@ You can fix this by:
       showDeleteConfirm: false,
       deleteCommand: null,
     }));
+  };
+
+  const handleSwitchToAdd = () => {
+    preloadUrgent('AddCommandForm');
+    setState(prev => ({ ...prev, mode: 'add' }));
   };
 
   if (loading) {
@@ -346,7 +362,7 @@ You can fix this by:
       onSelect={handleSelectCommand}
       onSwitchToSearch={handleSwitchToSearch}
       onToggleFavorite={handleToggleFavorite}
-      onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
+      onAdd={handleSwitchToAdd}
       onDelete={handleShowDeleteConfirm}
       onEdit={handleEditCommand}
     />
