@@ -71,8 +71,7 @@ node dist/index.js
 | d | Delete selected command |
 | e | Edit selected command |
 | / | Switch to search mode |
-| Escape | Switch to search mode |
-| Ctrl+C | Quit |
+| Escape / Ctrl+C | Quit |
 
 #### Search Mode
 
