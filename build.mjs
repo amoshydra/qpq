@@ -27,6 +27,4 @@ await build({
 
 fs.chmodSync(path.join(distDir, 'index.js'), 0o755);
 
-fs.copyFileSync('sample-commands.json', path.join(distDir, 'sample-commands.json'));
-
 console.log('Build complete!');

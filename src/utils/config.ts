@@ -74,11 +74,8 @@ function ensureIds(config: Config): Config {
 }
 
 async function initConfigFile(configPath: string): Promise<void> {
-  const dir = path.dirname(fileURLToPath(import.meta.url));
-  const samplePath = path.join(dir, '../../sample-commands.json');
-
-  const sampleContent = await fs.promises.readFile(samplePath, 'utf-8');
-  const sampleConfig = JSON.parse(sampleContent);
+  const sampleModule = await import('./sample-commands.js');
+  const sampleConfig = sampleModule.default;
 
   let nextId = 1;
   const commands = sampleConfig.commands.map((cmd: Command) => ({
