@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.1](https://github.com/amoshydra/qpq/compare/v0.2.0...v0.2.1) (2026-02-22)
+
+
+### Features
+
+* add --help flag and error handling for unknown arguments ([8a0bb49](https://github.com/amoshydra/qpq/commit/8a0bb491185252b5c9dd4d45c7697f0ac052b61a))
+
+
+### Bug Fixes
+
+* resolve type error in config.ts and add husky pre-push hook ([f64c124](https://github.com/amoshydra/qpq/commit/f64c12405d1b96508878fc32893ae289c255c09c))
+* show unified config path in --paths output ([929b110](https://github.com/amoshydra/qpq/commit/929b1109e2e4afcc6a608cbf3d3f1cc899277258))
+* use dynamic import for bundled sample commands ([afa5191](https://github.com/amoshydra/qpq/commit/afa51911b118b0ea1aca2ecc120f8d002b214545))
+
+
+### Miscellaneous Chores
+
+* release as 0.2.1 ([2ffc1f0](https://github.com/amoshydra/qpq/commit/2ffc1f05f02f7d08626bdb6351cb9b997231777d))
+
 ## [0.2.0](https://github.com/amoshydra/qpq/compare/v0.1.2...v0.2.0) (2026-02-22)
 
 
