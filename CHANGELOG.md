@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/amoshydra/qpq/compare/v0.2.1...v0.2.2) (2026-02-22)
+
+
+### Bug Fixes
+
+* remove unused sample commands files and update documentation ([6d497d1](https://github.com/amoshydra/qpq/commit/6d497d1c49284717b125a97f5c354a35c69c03ee))
+
 ## [0.2.1](https://github.com/amoshydra/qpq/compare/v0.2.0...v0.2.1) (2026-02-22)
 
 
