@@ -71,6 +71,7 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
     }
 
     onSubmit({
+      id: initialValues?.id || 0,
       name: finalName || finalCmd,
       command: finalCmd,
       description: description.trim() || undefined,

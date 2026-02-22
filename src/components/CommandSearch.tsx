@@ -7,7 +7,7 @@ import { CommandItem } from './CommandItem.js';
 interface CommandSearchProps {
   allCommands: Command[];
   recentCommands: Command[];
-  favorites: string[];
+  favorites: number[];
   onSelect: (command: Command) => void;
   onSwitchToMenu: () => void;
 }
@@ -91,7 +91,7 @@ export function CommandSearch({ allCommands, recentCommands, favorites, onSelect
               command={command}
               isSelected={index === selectedIndex}
               index={index}
-              isFavorite={favorites.includes(command.name)}
+              isFavorite={favorites.includes(command.id)}
             />
           ))}
         </>
