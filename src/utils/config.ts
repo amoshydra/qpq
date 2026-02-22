@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { fileURLToPath } from 'node:url';
 import * as path from 'path';
 import type { Command } from '../types/command.js';
 import type { Config, RecentCommand } from '../types/config.js';
@@ -75,10 +74,10 @@ function ensureIds(config: Config): Config {
 
 async function initConfigFile(configPath: string): Promise<void> {
   const sampleModule = await import('./sample-commands.js');
-  const sampleConfig = sampleModule.default;
+  const sampleConfig: { commands: Array<Omit<Command, 'id'>>; historyBufferSize?: number } = sampleModule.default;
 
   let nextId = 1;
-  const commands = sampleConfig.commands.map((cmd: Command) => ({
+  const commands = sampleConfig.commands.map((cmd) => ({
     ...cmd,
     id: nextId++
   }));
