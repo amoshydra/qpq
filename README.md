@@ -44,13 +44,6 @@ npm i -g qpq
 qpq
 ```
 
-### From source (development)
-```bash
-pnpm install
-pnpm run build
-node dist/index.js
-```
-
 ## Usage
 
 ### Command Line Flags
@@ -64,13 +57,6 @@ qpq -v           # Show version number (short form)
 qpq --paths      # Show configuration paths
 ```
 
-### Interactive Mode
-
-```bash
-pnpm start
-# or
-node dist/index.js
-```
 
 ### Keyboard Controls
 
@@ -215,7 +201,15 @@ pnpm run type-check  # TypeScript checks
 pnpm run test        # Run tests
 ```
 
-**Note**: A husky pre-commit hook runs `type-check`, `build`, and `test` before committing.
+### From source (development)
+```bash
+git clone git@github.com:amoshydra/qpq.git
+cd qpq
+pnpm install
+pnpm run build
+./qpq.sh
+```
+
 
 ## FAQ
 
