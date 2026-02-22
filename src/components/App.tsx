@@ -1,9 +1,7 @@
 import { Box, Text, useApp } from 'ink';
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { Command } from '../types/command.js';
-import { loadConfig, saveConfig } from '../utils/config.js';
-import { isFavorite as isFavoriteUtil, loadFavorites, saveFavorites, toggleFavorite as toggleFavoriteUtil } from '../utils/favorites.js';
-import { clearRecent, loadRecentWithCommands, saveRecent } from '../utils/recent.js';
+import { clearRecent, isFavorite as isFavoriteUtil, loadConfig, loadFavorites, loadRecentWithCommands, saveConfig, saveFavorites, saveRecent, toggleFavorite as toggleFavoriteUtil } from '../utils/config.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
 import { CommandMenu } from './CommandMenu.js';
 
@@ -19,8 +17,8 @@ interface AppState {
   mode: AppMode;
   commands: Command[] | null;
   recentCommands: Command[];
-  commandTimestamps: Map<string, number>;
-  favorites: string[];
+  commandTimestamps: Map<number, number>;
+  favorites: number[];
   selectedCommand: Command | null;
   editingCommand: Command | null;
   showDeleteConfirm: boolean;
@@ -50,7 +48,7 @@ export function App() {
         loadRecentWithCommands(config.commands),
         loadFavorites()
       ]);
-      const timestampMap = new Map<string, number>(recentData.timestamps.map(t => [t.name, t.timestamp]));
+      const timestampMap = new Map<number, number>(recentData.timestamps.map(t => [t.id, t.timestamp]));
       setState(prev => ({
         ...prev,
         commands: config.commands,
@@ -69,7 +67,11 @@ export function App() {
         if (config === null) {
           const { getDefaultConfigPath } = await import('../utils/config.js');
           const configPath = getDefaultConfigPath();
-          setError(`Failed to load config file. The file at "${configPath}" appears to be corrupted or invalid.\n\nYou can fix this by:\n1. Opening the file and correcting the syntax\n2. Deleting the file to regenerate it with defaults`);
+          setError(`Failed to load config file. The file at "${configPath}" appears to be corrupted or invalid.
+
+You can fix this by:
+1. Opening the file and correcting the syntax
+2. Deleting the file to regenerate it with defaults`);
           setLoading(false);
           return;
         }
@@ -79,7 +81,7 @@ export function App() {
           loadFavorites()
         ]);
 
-        const timestampMap = new Map<string, number>(recentData.timestamps.map(t => [t.name, t.timestamp]));
+        const timestampMap = new Map<number, number>(recentData.timestamps.map(t => [t.id, t.timestamp]));
 
         setState({
           mode: 'menu',
@@ -143,18 +145,21 @@ export function App() {
     setState(prev => ({ ...prev, mode: 'menu' }));
   };
 
-  const handleToggleFavorite = async (commandName: string) => {
-    const updatedFavs = await toggleFavoriteUtil(commandName);
+  const handleToggleFavorite = async (commandId: number) => {
+    const updatedFavs = await toggleFavoriteUtil(commandId);
     setState(prev => ({ ...prev, favorites: updatedFavs }));
   };
 
-  const handleAddCommand = (command: Command) => {
+  const handleAddCommand = async (command: Command) => {
     if (!state.commands) return;
 
-    const newCommands = [...state.commands, command];
-    const newConfig = { commands: newCommands };
+    const config = await loadConfig();
+    const nextId = config?.nextId || 1;
+    const newCommand = { ...command, id: nextId };
+    const newCommands = [...state.commands, newCommand];
+    const newConfig = { commands: newCommands, favorites: state.favorites, recent: [], nextId: nextId + 1 };
 
-    saveConfig(newConfig);
+    await saveConfig(newConfig);
     setState(prev => ({
       ...prev,
       mode: 'menu',
@@ -178,59 +183,42 @@ export function App() {
   const handleEditSubmit = async (updatedCommand: Command) => {
     if (!state.commands || !state.editingCommand) return;
 
-    const originalName = state.editingCommand.name;
-    const nameChanged = updatedCommand.name !== originalName;
-    const wasFavorite = isFavoriteUtil(originalName, state.favorites);
-
-    const newCommands = state.commands.filter(c => c.name !== originalName);
-    const newConfig = { commands: [...newCommands, updatedCommand] };
+    const originalId = state.editingCommand.id;
+    const newCommands = state.commands.map(c => c.id === originalId ? updatedCommand : c);
+    const config = await loadConfig();
+    const newConfig = { commands: newCommands, favorites: state.favorites, recent: state.recentCommands.map(c => ({ id: c.id, timestamp: Date.now() })), nextId: config?.nextId || 1 };
 
     await saveConfig(newConfig);
-
-    if (nameChanged) {
-      if (wasFavorite) {
-        const newFavorites = state.favorites
-          .filter(f => f !== originalName)
-          .concat(updatedCommand.name);
-        await saveFavorites(newFavorites);
-      }
-
-      const recent = state.recentCommands.filter(c => c.name !== originalName);
-      await clearRecent();
-      for (const cmd of recent) {
-        await saveRecent(cmd);
-      }
-    }
 
     setState(prev => ({
       ...prev,
       mode: 'menu',
       commands: newConfig.commands,
-      favorites: nameChanged && wasFavorite ? state.favorites.filter(f => f !== originalName).concat(updatedCommand.name) : prev.favorites,
       editingCommand: null,
     }));
   };
 
-  const handleDeleteCommand = async (commandName: string) => {
+  const handleDeleteCommand = async (commandId: number) => {
     if (!state.commands) return;
 
     try {
-      const newCommands = state.commands.filter(c => c.name !== commandName);
-      const newConfig = { commands: newCommands };
+      const newCommands = state.commands.filter(c => c.id !== commandId);
+      const config = await loadConfig();
+      const newConfig = { commands: newCommands, favorites: state.favorites, recent: [], nextId: config?.nextId || 1 };
 
       await saveConfig(newConfig);
 
-      const newFavorites = state.favorites.filter(f => f !== commandName);
+      const newFavorites = state.favorites.filter(f => f !== commandId);
       await saveFavorites(newFavorites);
 
-      const recent = state.recentCommands.filter(c => c.name !== commandName);
+      const recent = state.recentCommands.filter(c => c.id !== commandId);
 
       const newTimestamps = new Map(state.commandTimestamps);
-      newTimestamps.delete(commandName);
+      newTimestamps.delete(commandId);
 
       await clearRecent();
       for (const cmd of recent) {
-        await saveRecent(cmd);
+        await saveRecent({ id: cmd.id });
       }
 
       setState(prev => ({
@@ -251,8 +239,8 @@ export function App() {
     setState(prev => ({ ...prev, mode: 'menu', editingCommand: null }));
   };
 
-  const handleShowDeleteConfirm = (commandName: string) => {
-    const command = state.commands?.find(cmd => cmd.name === commandName) ?? null;
+  const handleShowDeleteConfirm = (commandId: number) => {
+    const command = state.commands?.find(cmd => cmd.id === commandId) ?? null;
     if (command) {
       setState(prev => ({
         ...prev,
@@ -338,9 +326,9 @@ export function App() {
           command={state.deleteCommand}
           onConfirm={() => {
             handleHideDeleteConfirm();
-            const commandName = state.deleteCommand?.name;
-            if (commandName) {
-              handleDeleteCommand(commandName);
+            const commandId = state.deleteCommand?.id;
+            if (commandId !== undefined) {
+              handleDeleteCommand(commandId);
             }
           }}
           onCancel={handleHideDeleteConfirm}
@@ -364,3 +352,5 @@ export function App() {
     />
   );
 }
+
+export default App;

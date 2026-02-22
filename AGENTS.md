@@ -16,7 +16,6 @@ pnpm run dev          # Dev mode (auto-reload with tsx)
 pnpm run build        # Build for production
 pnpm run type-check   # TypeScript check
 pnpm start            # Run built app
-pnpm run build:wrapper  # Build wrapper script only
 ```
 
 **Build Output:**
@@ -32,7 +31,7 @@ src/
 ├── components/     # React components (PascalCase: CommandMenu.tsx)
 ├── utils/          # Utility functions (camelCase: loadConfig.ts)
 ├── types/          # TypeScript types (Config.ts)
-└── data/           # Static data (YAML sample configs)
+└── data/           # Static data (JSON sample configs)
 ```
 
 **Conventions:**
@@ -142,9 +141,9 @@ function getConfigDir(): string {
 ```
 
 **Config Paths by Platform:**
-- **Windows**: `%LocalAppData%\qpq\fav.yaml`
-- **macOS**: `~/Library/Application Support/qpq/fav.yaml`
-- **Linux/Unix**: `~/.local/state/qpq/fav.yaml`
+- **Windows**: `%LocalAppData%\qpq\config.json`
+- **macOS**: `~/Library/Application Support/qpq/config.json`
+- **Linux/Unix**: `~/.local/state/qpq/config.json`
 
 ## State Management
 
@@ -178,7 +177,7 @@ useInput((input, key) => {
 
 ```typescript
 async function initConfigFile(configPath: string): Promise<void> {
-  const samplePath = path.join(process.cwd(), 'src', 'data', 'sample-commands.yaml');
+  const samplePath = path.join(process.cwd(), 'src', 'data', 'sample-commands.json');
   try {
     await fs.promises.copyFile(samplePath, configPath);
   } catch (error) {
@@ -191,29 +190,36 @@ async function initConfigFile(configPath: string): Promise<void> {
 
 ### Config Locations
 
-- Linux: `~/.local/state/qpq/fav.yaml`
-- macOS: `~/Library/Application Support/qpq/fav.yaml`
-- Windows: `%LocalAppData%\qpq\fav.yaml`
+- Linux: `~/.local/state/qpq/config.json`
+- macOS: `~/Library/Application Support/qpq/config.json`
+- Windows: `%LocalAppData%\qpq\config.json`
 
 ### Data Files
 
-- **Config file:** YAML format with `commands` array root
-- **Sample file:** `src/data/sample-commands.yaml` - provides default commands
+- **Config file:** JSON format with `commands`, `favorites`, and `recent` array root
+- **Sample file:** `src/data/sample-commands.json` - provides default commands
 
 **Sample command format:**
-```yaml
-commands:
-  - name: "Git Status"
-    command: "git status"
-    description: "Show git status"
-    tags: [git]
+```json
+{
+  "commands": [
+    {
+      "name": "Git Status",
+      "command": "git status",
+      "description": "Show git status",
+      "tags": ["git"]
+    }
+  ],
+  "favorites": [],
+  "recent": []
+}
 ```
 
 ### Key Dependencies
 
 - `ink` v6 - React for terminal UIs
 - `react` v19 - UI library
-- `js-yaml` - YAML parsing
+- `fullscreen-ink` - Fullscreen terminal support
 - `ink-text-input` - Text input handling
 
 ### Application Modes

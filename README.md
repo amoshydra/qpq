@@ -121,16 +121,12 @@ node dist/index.js
 
 ### Config File
 
-Default config locations:
-- Linux: `~/.local/state/qpq/fav.yaml`
-- macOS: `~/Library/Application Support/qpq/fav.yaml`
-- Windows: `%LocalAppData%\qpq\fav.yaml`
+Default config location:
+- Linux: `~/.local/state/qpq/config.json`
+- macOS: `~/Library/Application Support/qpq/config.json`
+- Windows: `%LocalAppData%\qpq\config.json`
 
-### Favorites & Recent Files
-
-The app tracks favorites and recent commands:
-- Favorites: `~/.local/state/qpq/favorites.json`
-- Recent: `~/.local/state/qpq/recent.json`
+The config file stores commands, favorites, and recent history in a single JSON file.
 
 ### Menu Display
 
@@ -168,20 +164,29 @@ The menu shows commands in this order:
 
 ## Command Format
 
-```yaml
-commands:
-  - name: "Git Push"
-    command: "git push origin {branch}"
-    description: "Push to remote branch"
-    tags: [git]
+```json
+{
+  "commands": [
+    {
+      "name": "Git Push",
+      "command": "git push origin {branch}",
+      "description": "Push to remote branch",
+      "tags": ["git"]
+    }
+  ],
+  "favorites": [],
+  "recent": []
+}
 ```
 
 ### Templates
 
 Use `{placeholder}` syntax for dynamic values:
-```yaml
-- name: "Git Push"
-  command: "git push origin {branch}"
+```json
+{
+  "name": "Git Push",
+  "command": "git push origin {branch}"
+}
 ```
 
 When you select a command with placeholders, you'll be prompted to enter each value. Use `Ctrl+L` to cancel.
@@ -211,14 +216,18 @@ When a command is executed via the wrapper, it runs in a subprocess. This means:
 
 **Workaround**: If you need to change directory or set environment variables, append `$SHELL` to keep a new shell open:
 
-```yaml
-# Instead of:
-- name: "Go to project"
-  command: "cd /path/to/project"
+```json
+// Instead of:
+{
+  "name": "Go to project",
+  "command": "cd /path/to/project"
+}
 
-# Use:
-- name: "Go to project"
-  command: "cd /path/to/project; $SHELL"
+// Use:
+{
+  "name": "Go to project",
+  "command": "cd /path/to/project; $SHELL"
+}
 ```
 
 This opens a new interactive shell in the target directory. Exit the shell to return to your original session.

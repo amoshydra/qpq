@@ -6,13 +6,13 @@ import type { Command } from '../types/command.js';
 interface CommandMenuProps {
   commands: Command[];
   recentCommands: Command[];
-  commandTimestamps: Map<string, number>;
-  favorites: string[];
+  commandTimestamps: Map<number, number>;
+  favorites: number[];
   onSelect: (command: Command) => void;
   onSwitchToSearch: () => void;
-  onToggleFavorite: (commandName: string) => void;
+  onToggleFavorite: (commandId: number) => void;
   onAdd: () => void;
-  onDelete: (commandName: string) => void;
+  onDelete: (commandId: number) => void;
   onEdit: (command: Command) => void;
   children?: React.ReactNode;
 }
@@ -22,12 +22,12 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
 
-  const favoritesList = commands.filter(cmd => favorites.includes(cmd.name));
+  const favoritesList = commands.filter(cmd => favorites.includes(cmd.id));
 
-  const nonFavoriteCommands = commands.filter(cmd => !favorites.includes(cmd.name))
+  const nonFavoriteCommands = commands.filter(cmd => !favorites.includes(cmd.id))
     .sort((a, b) => {
-      const aTime = commandTimestamps.get(a.name) || 0;
-      const bTime = commandTimestamps.get(b.name) || 0;
+      const aTime = commandTimestamps.get(a.id) || 0;
+      const bTime = commandTimestamps.get(b.id) || 0;
 
       if (aTime === 0 && bTime === 0) {
         return a.name.localeCompare(b.name);
@@ -77,7 +77,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
 
     if (input === 'f' && allCommands.length > 0) {
       const selectedCommand = allCommands[selectedIndex];
-      onToggleFavorite(selectedCommand.name);
+      onToggleFavorite(selectedCommand.id);
       return;
     }
 
@@ -88,7 +88,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
 
     if (input === 'd' && allCommands.length > 0) {
       const selectedCommand = allCommands[selectedIndex];
-      onDelete(selectedCommand.name);
+      onDelete(selectedCommand.id);
       return;
     }
 
@@ -111,7 +111,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
           command={command}
           isSelected={index === selectedIndex}
           index={index}
-          isFavorite={favorites.includes(command.name)}
+          isFavorite={favorites.includes(command.id)}
         />
       ))}
 

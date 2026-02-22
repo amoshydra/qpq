@@ -36,11 +36,9 @@
     "ink": "^6.6.0",
     "ink-scroll-list": "^0.4.1",
     "ink-text-input": "^6.0.0",
-    "js-yaml": "^4.1.1",
     "react": "^19.2.4"
   },
   "devDependencies": {
-    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.1",
     "@types/react-dom": "^19.2.3",

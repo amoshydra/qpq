@@ -4,8 +4,8 @@ import type { Command } from '../types/command.js';
 
 interface DeleteCommandProps {
   commands: Command[];
-  favorites: string[];
-  onDelete: (commandName: string) => Promise<void>;
+  favorites: number[];
+  onDelete: (commandId: number) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -60,7 +60,7 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
       if (key.return || input === 'y') {
         if (selectedCommand) {
           setIsDeleting(true);
-          onDelete(selectedCommand.name).finally(() => {
+          onDelete(selectedCommand.id).finally(() => {
             setIsDeleting(false);
             setStage('select');
             setSelectedCommand(null);
@@ -110,7 +110,7 @@ export function DeleteCommand({ commands, favorites, onDelete, onCancel }: Delet
               <Text color={idx === selectedIndex ? 'green' : 'gray'}>{idx + 1}.</Text>
             </Box>
             <Box width={30}>
-              <Text inverse={idx === selectedIndex} color={idx === selectedIndex ? 'green' : favorites.includes(cmd.name) ? 'yellow' : undefined}>
+              <Text inverse={idx === selectedIndex} color={idx === selectedIndex ? 'green' : favorites.includes(cmd.id) ? 'yellow' : undefined}>
                 {cmd.name}
               </Text>
             </Box>
