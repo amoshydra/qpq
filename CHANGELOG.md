@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0](https://github.com/amoshydra/qpq/compare/v0.1.2...v0.2.0) (2026-02-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Config storage format has changed from separate YAML/JSON files (fav.json, favorites.json, recent.json) to a single config.json file. Support for YAML configuration has been dropped. The application will automatically migrate existing data on first run.
+
+### Features
+
+* unify config storage into single file ([315583c](https://github.com/amoshydra/qpq/commit/315583cd110a1fc2fa220458d2fdf077afb9e7f3))
+
+
+### Miscellaneous Chores
+
+* release as 0.2.0 ([50186d5](https://github.com/amoshydra/qpq/commit/50186d5f9bda4c95b4a5a1d8ff49e7d66feb7910))
+
 ## [0.1.2](https://github.com/amoshydra/qpq/compare/v0.1.1...v0.1.2) (2026-02-21)
 
 
