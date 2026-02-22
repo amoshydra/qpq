@@ -29,8 +29,12 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
       prevField();
     } else if (key.downArrow) {
       nextField();
-    } else if (key.return && formField === 'tags') {
-      handleSubmit();
+    } else if (key.return) {
+      if (formField === 'tags') {
+        handleSubmit();
+      } else {
+        nextField();
+      }
     }
   });
 

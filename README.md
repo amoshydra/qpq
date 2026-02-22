@@ -100,7 +100,8 @@ qpq --paths      # Show configuration paths
 | Type | Enter text in current field |
 | Tab | Next field |
 | Shift+Tab | Previous field |
-| Enter | Submit (only on Tags field) |
+| ↑/↓ | Navigate fields |
+| Enter | Next field or submit (if last) |
 | Escape | Cancel |
 
 #### Template Prompt
