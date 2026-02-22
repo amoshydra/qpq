@@ -6,6 +6,7 @@ import os from 'os';
 import path from 'path';
 import { App } from './components/App.js';
 import FullScreen from './utils/fullscreen.js';
+import { getDefaultConfigPath } from './utils/config.js';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -19,19 +20,11 @@ if (versionFlag) {
 }
 
 if (pathsFlag) {
-  const platform = os.platform();
-  const homeDir = os.homedir();
-  const configDir = path.join(
-    platform === 'win32' ? path.join(homeDir, 'AppData', 'Local', 'qpq') :
-    platform === 'darwin' ? path.join(homeDir, 'Library', 'Application Support', 'qpq') :
-    path.join(homeDir, '.local', 'state', 'qpq')
-  );
+  const configPath = getDefaultConfigPath();
 
   console.log('Configuration paths:');
-  console.log(`  Config directory: ${configDir}`);
-  console.log(`  Favorites file: ${path.join(configDir, 'favorites.json')}`);
-  console.log(`  Recent commands file: ${path.join(configDir, 'recent.json')}`);
-  console.log(`  Main config file: ${path.join(configDir, 'fav.json')}`);
+  console.log(`  Config directory: ${path.dirname(configPath)}`);
+  console.log(`  Main config file: ${configPath}`);
   process.exit(0);
 }
 
