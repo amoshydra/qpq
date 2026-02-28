@@ -180,6 +180,27 @@ You can fix this by:
     }));
   };
 
+  const handleDuplicateCommand = async (command: Command) => {
+    if (!state.commands) return;
+
+    const config = await loadConfig();
+    const nextId = config?.nextId || 1;
+    const duplicatedCommand: Command = {
+      ...command,
+      id: nextId,
+      name: `${command.name} (Copy)`,
+    };
+    const newCommands = [...state.commands, duplicatedCommand];
+    const newConfig = { commands: newCommands, favorites: state.favorites, recent: [], nextId: nextId + 1 };
+
+    await saveConfig(newConfig);
+    setState(prev => ({
+      ...prev,
+      commands: newCommands,
+      commandTimestamps: new Map(prev.commandTimestamps)
+    }));
+  };
+
   const handleEditSubmit = async (updatedCommand: Command) => {
     if (!state.commands || !state.editingCommand) return;
 
@@ -349,6 +370,7 @@ You can fix this by:
       onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
       onDelete={handleShowDeleteConfirm}
       onEdit={handleEditCommand}
+      onDuplicate={handleDuplicateCommand}
     />
   );
 }

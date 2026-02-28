@@ -14,11 +14,12 @@ interface CommandMenuProps {
   onAdd: () => void;
   onDelete: (commandId: number) => void;
   onEdit: (command: Command) => void;
+  onDuplicate: (command: Command) => void;
   children?: React.ReactNode;
 }
 
 
-export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onAdd, onDelete, onEdit, children }: CommandMenuProps) {
+export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onAdd, onDelete, onEdit, onDuplicate, children }: CommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
 
@@ -97,6 +98,12 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
       onEdit(selectedCommand);
       return;
     }
+
+    if (input === 'c' && allCommands.length > 0) {
+      const selectedCommand = allCommands[selectedIndex];
+      onDuplicate(selectedCommand);
+      return;
+    }
   });
 
   return (
@@ -117,7 +124,7 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
 
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: Navigate | Enter/1-9: Select | f: Favorite | a: Add | d: Delete | e: Edit | /: Search | Ctrl+C: Quit
+          ↑↓: Navigate | Enter/1-9: Select | f: Favorite | a: Add | d: Delete | e: Edit | c: Clone | /: Search | Ctrl+C: Quit
         </Text>
       </Box>
     </Box>
