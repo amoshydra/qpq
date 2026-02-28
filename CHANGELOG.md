@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.5](https://github.com/amoshydra/qpq/compare/v0.2.4...v0.2.5) (2026-02-28)
+
+
+### Features
+
+* add command duplicate feature ([6efc34d](https://github.com/amoshydra/qpq/commit/6efc34d03fa0db07184ea6b18ce9f6d1ab75c504))
+
+
+### Miscellaneous Chores
+
+* release as 0.2.5 ([b81e231](https://github.com/amoshydra/qpq/commit/b81e231375e535fa55322ee433a29fd33b684be5))
+
 ## [0.2.4](https://github.com/amoshydra/qpq/compare/v0.2.3...v0.2.4) (2026-02-22)
 
 
