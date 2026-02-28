@@ -1,9 +1,10 @@
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
+import type { PlaceholderInfo } from '../utils/templates.js';
 
 interface TemplatePromptProps {
-  placeholders: string[];
+  placeholders: PlaceholderInfo[];
   onSubmit: (values: Record<string, string>) => void;
   onCancel: () => void;
 }
@@ -34,7 +35,7 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
       } else {
         const result: Record<string, string> = {};
         placeholders.forEach((p, i) => {
-          result[p] = values[i];
+          result[p.name] = values[i];
         });
         onSubmit(result);
       }
@@ -57,8 +58,8 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
       </Box>
 
       {placeholders.map((placeholder, index) => (
-        <Box key={placeholder}>
-          <Text color={index === currentIndex ? 'green' : 'gray'}>{placeholder}: </Text>
+        <Box key={placeholder.name}>
+          <Text color={index === currentIndex ? 'green' : 'gray'}>{placeholder.name}: </Text>
           <TextInput
             value={values[index]}
             onChange={handleChange}
