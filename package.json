@@ -7,8 +7,14 @@
     "url": "git+https://github.com/amoshydra/qpq.git"
   },
   "homepage": "https://github.com/amoshydra/qpq",
-  "main": "dist/index.js",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "bin": {
     "qpq": "./qpq.sh"
   },
