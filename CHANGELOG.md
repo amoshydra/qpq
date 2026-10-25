@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/amoshydra/qpq/compare/v0.2.6...v0.2.7) (2026-10-25)
+
+
+### Bug Fixes
+
+* expose package ESM entry through exports ([6b6f4d2](https://github.com/amoshydra/qpq/commit/6b6f4d2318839adb9d7b80d38941954465f9408e))
+
 ## [0.2.6](https://github.com/amoshydra/qpq/compare/v0.2.5...v0.2.6) (2026-10-25)
 
 
