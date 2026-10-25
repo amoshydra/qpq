@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.6](https://github.com/amoshydra/qpq/compare/v0.2.5...v0.2.6) (2026-10-25)
+
+
+### Features
+
+* add sort index support for template parameters ([09f7a06](https://github.com/amoshydra/qpq/commit/09f7a06e00971e185ba758eb496adce4ed885147))
+
+
+### Bug Fixes
+
+* correct package entry point and repository metadata ([c99d78f](https://github.com/amoshydra/qpq/commit/c99d78f6089e0e7160db5409b63e7adade1ec6c8))
+
 ## [0.2.5](https://github.com/amoshydra/qpq/compare/v0.2.4...v0.2.5) (2026-02-28)
 
 
