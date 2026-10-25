@@ -7,49 +7,68 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
+  id-token: write
+
+concurrency:
+  group: release-please-main
+  cancel-in-progress: false
 
 jobs:
-  release-please:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - name: Run release-please
         id: release
+        uses: googleapis/release-please-action@v4
         with:
           release-type: node
-          push-tags: false
+          # A PAT can be supplied to let CI run on release-please PRs.
+          # Falls back to the workflow token for normal release creation.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
 
-      # The logic below handles the npm publication:
-      - name: Checkout
+      - name: Checkout release commit
+        if: ${{ steps.release.outputs.release_created == 'true' }}
         uses: actions/checkout@v4
-        # these if statements ensure that a publication only occurs when
-        # a new release is created:
-        if: ${{ steps.release.outputs.release_created }}
+        with:
+          ref: ${{ steps.release.outputs.sha }}
+          fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - name: Install pnpm
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
-        if: ${{ steps.release.outputs.release_created }}
 
       - name: Install Node.js
+        if: ${{ steps.release.outputs.release_created == 'true' }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Trusted publishing requires Node 22.14+ and npm CLI 11.5.1+.
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
-        if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
-        run: pnpm install
-        if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: pnpm exec vitest run
+
+      - name: Type check
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: pnpm run type-check
 
       - name: Build
+        if: ${{ steps.release.outputs.release_created == 'true' }}
         run: pnpm run build
-        if: ${{ steps.release.outputs.release_created }}
 
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-        if: ${{ steps.release.outputs.release_created }}
+      - name: Publish to npm
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        # Trusted publishing authenticates with OIDC and generates provenance
+        # automatically. NPM_TOKEN is intentionally not used here.
+        run: npm publish --access public
