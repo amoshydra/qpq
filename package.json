@@ -4,10 +4,10 @@
   "description": "A TUI launcher for frequently used commands",
   "repository": {
     "type": "git",
-    "url": "https://github.com/amoshydra/qpq"
+    "url": "git+https://github.com/amoshydra/qpq.git"
   },
   "homepage": "https://github.com/amoshydra/qpq",
-  "main": "dist/cli.js",
+  "main": "dist/index.js",
   "type": "module",
   "bin": {
     "qpq": "./qpq.sh"
