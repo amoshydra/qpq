@@ -1,6 +1,6 @@
 {
   "name": "qpq",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "description": "A native TUI launcher for frequently used commands",
   "repository": {
     "type": "git",
