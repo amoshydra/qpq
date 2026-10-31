@@ -94,6 +94,19 @@ describePosix('qpq.sh wrapper', () => {
     expect(result.stdout).toBe('marker-ok\n');
   });
 
+  it('prefers the bundled native binary', async () => {
+    const binDir = path.join(testDir, 'bin');
+    const nativePath = path.join(binDir, 'qpq-native');
+    await fs.promises.mkdir(binDir);
+    await fs.promises.writeFile(nativePath, '#!/bin/sh\nprintf "native %s\\n" "$*"\n');
+    await fs.promises.chmod(nativePath, 0o755);
+
+    const result = run('sh', [scriptPath, '--version']);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('native --version\n');
+  });
+
   it('resolves symlinked entry points', async () => {
     const binDir = path.join(testDir, 'bin');
     const linkPath = path.join(binDir, 'qpq');

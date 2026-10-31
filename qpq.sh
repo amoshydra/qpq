@@ -18,6 +18,14 @@ SCRIPT_DIR=$(CDPATH= cd "$(dirname "$SCRIPT_PATH")" 2>/dev/null && pwd -P) || {
   exit 1
 }
 
+# Prefer the native binary installed by the npm postinstall step. If it is
+# missing (unsupported platform or install scripts disabled), fall back to the
+# Node implementation.
+NATIVE_BIN="${QPQ_NATIVE_BIN:-$SCRIPT_DIR/bin/qpq-native}"
+if [ -x "$NATIVE_BIN" ]; then
+  exec "$NATIVE_BIN" "$@"
+fi
+
 if ! command -v node >/dev/null 2>&1; then
   echo "qpq: node is required but was not found in PATH" >&2
   exit 1

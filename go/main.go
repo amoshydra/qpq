@@ -11,12 +11,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const version = "0.3.0-go-prototype"
+var version = "dev"
 
 func main() {
 	path, err := configPath()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "qpq-go: %v\n", err)
+		fmt.Fprintf(os.Stderr, "qpq: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -24,7 +24,7 @@ func main() {
 	for _, arg := range args {
 		switch arg {
 		case "--version", "-v":
-			fmt.Printf("qpq-go %s\n", version)
+			fmt.Printf("qpq %s\n", version)
 			return
 		case "--paths":
 			fmt.Printf("Configuration paths:\n")
@@ -35,7 +35,7 @@ func main() {
 			printHelp()
 			return
 		default:
-			fmt.Fprintf(os.Stderr, "qpq-go: unknown option %q\n\n", arg)
+			fmt.Fprintf(os.Stderr, "qpq: unknown option %q\n\n", arg)
 			printHelp()
 			os.Exit(2)
 		}
@@ -43,25 +43,25 @@ func main() {
 
 	cfg, err := loadConfig(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "qpq-go: %v\n", err)
+		fmt.Fprintf(os.Stderr, "qpq: %v\n", err)
 		os.Exit(1)
 	}
 
 	program := tea.NewProgram(newModel(cfg, path), tea.WithAltScreen())
 	result, err := program.Run()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "qpq-go: %v\n", err)
+		fmt.Fprintf(os.Stderr, "qpq: %v\n", err)
 		os.Exit(1)
 	}
 
 	final, ok := result.(model)
 	if !ok {
-		fmt.Fprintln(os.Stderr, "qpq-go: unexpected program state")
+		fmt.Fprintln(os.Stderr, "qpq: unexpected program state")
 		os.Exit(1)
 	}
 
 	if final.saveErr != nil {
-		fmt.Fprintf(os.Stderr, "qpq-go: warning: could not save recent history: %v\n", final.saveErr)
+		fmt.Fprintf(os.Stderr, "qpq: warning: could not save recent history: %v\n", final.saveErr)
 	}
 
 	if final.pendingCommand != "" {
@@ -70,7 +70,7 @@ func main() {
 }
 
 func printHelp() {
-	fmt.Print(`Usage: qpq-go [options]
+	fmt.Print(`Usage: qpq [options]
 
 A native TUI launcher prototype built with Go and Bubble Tea.
 
@@ -106,7 +106,7 @@ func runCommand(command string) int {
 		if errors.As(err, &exitError) {
 			return exitError.ExitCode()
 		}
-		fmt.Fprintf(os.Stderr, "qpq-go: %v\n", err)
+		fmt.Fprintf(os.Stderr, "qpq: %v\n", err)
 		return 1
 	}
 

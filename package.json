@@ -27,6 +27,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "prepare": "husky",
+    "postinstall": "node scripts/postinstall.mjs",
     "prepack": "pnpm run build",
     "lint:package": "publint"
   },
@@ -38,7 +39,8 @@
   "author": "",
   "files": [
     "dist",
-    "qpq.sh"
+    "qpq.sh",
+    "scripts/postinstall.mjs"
   ],
   "license": "MIT",
   "engines": {

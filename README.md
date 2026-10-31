@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/amoshydra/qpq.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/stars/amoshydra/qpq.svg)](https://github.com/amoshydra/qpq)
 
-A terminal-based command launcher for frequently used commands. Built with TypeScript, React, and Ink.
+A terminal-based command launcher for frequently used commands. The default runtime is native Go + Bubble Tea; a TypeScript/Ink implementation remains as a fallback.
 
 <center>
 
@@ -21,7 +21,8 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 - **Search Mode**: Real-time substring search across names, commands, descriptions, tags, and aliases
 - **Template Support**: Command placeholders that prompt for values
 - **Cross-platform Config**: Uses the right config directory on Linux, macOS, and Windows
-- **POSIX Launcher**: Executes the selected command through `qpq.sh` on Linux and macOS
+- **Native Runtime**: Ships a static Go binary for Linux, macOS, Termux, and Raspberry Pi
+- **Node Fallback**: Falls back to the TypeScript/Ink implementation when a native binary is unavailable
 - **Auto-init**: Creates config directory and sample file if missing
 
 | **Menu Mode** | **Add from shell** |
@@ -34,7 +35,7 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 
 ## Installation
 
-Requires Node.js 20 or newer.
+The npm package installs a native Go binary for your platform. Node.js 20+ is used for the npm install step and remains available as a fallback, but `qpq` runs the native binary when it is available.
 
 ### Try instantly (no install)
 ```bash
@@ -47,9 +48,32 @@ npm i -g qpq
 qpq
 ```
 
+### Termux / Android
+
+```bash
+npm i -g qpq
+qpq
+```
+
+The npm postinstall step downloads the Android/Termux ARM64 binary automatically. Alternatively, download `qpq-android-arm64` from the latest GitHub release and install it as `qpq`:
+
+```bash
+curl -LO https://github.com/amoshydra/qpq/releases/latest/download/qpq-android-arm64
+chmod +x qpq-android-arm64
+cp qpq-android-arm64 "$PREFIX/bin/qpq"
+```
+
+### Raspberry Pi
+
+Download the matching release binary:
+
+- 64-bit Raspberry Pi OS: `qpq-linux-arm64`
+- 32-bit Pi 2/3/4: `qpq-linux-armv7`
+- Pi 1 / Zero: `qpq-linux-armv6`
+
 ### Windows
 
-The npm launcher is a POSIX shell script (`qpq.sh`), so end-to-end command execution is supported on Linux and macOS. On Windows you can build and run the UI with `node dist/index.js`, but selected commands are only printed rather than executed automatically.
+The npm launcher is a POSIX shell script, so npm installation is not supported end-to-end on Windows. Download `qpq-windows-amd64.exe` from the latest GitHub release instead.
 
 ## Usage
 
@@ -215,6 +239,19 @@ qpq does not sandbox commands. It evaluates the selected command in your shell, 
 
 ## Development
 
+### Native implementation (primary)
+
+```bash
+cd go
+make check       # go test + go vet
+make build       # build ./qpq
+make cross       # build all release targets
+```
+
+See [`go/README.md`](go/README.md) for Termux/Linux install instructions and the full feature list.
+
+### Node fallback
+
 ```bash
 pnpm install         # Install dependencies
 pnpm run dev         # Run with tsx (auto-reload)
@@ -225,9 +262,9 @@ pnpm run test:run    # Run tests once
 pnpm start           # Run the built app
 ```
 
-`pnpm run dev` and `pnpm start` render the TUI but do not execute selected commands. Use the wrapper after building to test the full flow:
+`pnpm run dev` and `pnpm start` render the Node TUI but do not execute selected commands. Use `./qpq.sh` with a native binary present or after building the wrapper to test the full flow.
 
-### From source (development)
+### From source (Node development)
 ```bash
 git clone git@github.com:amoshydra/qpq.git
 cd qpq
@@ -236,19 +273,11 @@ pnpm run build
 ./qpq.sh
 ```
 
-## Go prototype (experimental)
-
-A native Go + Bubble Tea prototype lives in [`go/`](go/README.md). It reads the same config file and mirrors the menu, favorites, recents, search, add/edit/delete/clone forms, template prompts, shell-history picker, and command execution.
-
-It is intended for evaluating a native replacement, especially on Termux. See [`go/README.md`](go/README.md) for Termux/Linux build and install instructions.
-
 ## FAQ
 
 ### Why qpq.sh wrapper?
 
-`qpq.sh` launches the TUI, then evaluates the selected command after the UI exits. Running `node dist/index.js` directly renders the menu but only prints the selected command instead of running it.
-
-The wrapper also propagates the exit status of the command it runs.
+`qpq.sh` is the npm entry point. It prefers the native binary installed by the npm postinstall step (`bin/qpq-native`). If that binary is unavailable, it falls back to the Node implementation, evaluates the selected command after the UI exits, and propagates the command's exit status.
 
 ### Why don't directory changes persist after running a command?
 
