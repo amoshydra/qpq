@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -23,7 +24,8 @@ jobs:
         id: release
         uses: googleapis/release-please-action@v4
         with:
-          release-type: node
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
           # A PAT can be supplied to let CI run on release-please PRs.
           # Falls back to the workflow token for normal release creation.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
