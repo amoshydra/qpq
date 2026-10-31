@@ -137,10 +137,11 @@ Use `qpq-go --paths` to print the exact path. If the file does not exist, a smal
 
 In search mode, `Esc` returns to the menu and `Enter` runs the selected result.
 
-## Measured on Linux (this prototype)
+## Measured
 
-- `qpq-go --version`: ~0.002s
-- Menu RSS: ~5.5MB
-- Static binary: ~4.2MB
+| Environment | `--version` startup | Menu RSS | Static binary |
+|---|---:|---:|---:|
+| Linux x86_64 | ~2ms | ~5.5MB | ~4.2MB |
+| Termux aarch64 | 45–52ms | 7.9MB | ~4.2MB |
 
-Your Termux numbers will differ, but the important comparison is against Node's ~1s startup and ~108MB RSS.
+For comparison, the Node version on the same Termux device measured ~1.0s startup and ~108MB RSS. The native prototype is roughly 20× faster to start and 14× smaller in memory.
