@@ -15,6 +15,9 @@
     "test": "node --test",
     "prepare": "husky",
     "postinstall": "node scripts/postinstall.mjs",
+    "prepare:npm": "node scripts/publish-npm.mjs --prepare-only",
+    "publish:npm": "node scripts/publish-npm.mjs",
+    "bootstrap:platforms": "node scripts/publish-npm.mjs --bootstrap",
     "lint:package": "publint"
   },
   "keywords": [
@@ -31,7 +34,8 @@
   "license": "MIT",
   "os": [
     "linux",
-    "darwin"
+    "darwin",
+    "android"
   ],
   "engines": {
     "node": ">=20"

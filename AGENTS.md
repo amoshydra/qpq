@@ -4,7 +4,7 @@ This file provides coding conventions and development guidelines for agentic cod
 
 ## Project Overview
 
-qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) and a postinstall downloader (`scripts/postinstall.mjs`) that installs the native binary for the current platform.
+qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) and a postinstall resolver (`scripts/postinstall.mjs`) that copies the binary from the matching optional platform package.
 
 Do not reintroduce the previous TypeScript/Ink runtime. The final Node implementation is preserved at the `node-final` tag.
 
@@ -50,7 +50,8 @@ go/                 # Native Go implementation
 └── *_test.go       # Go tests
 
 scripts/            # npm installer tooling
-├── postinstall.mjs # Downloads/verifies platform binary from GitHub releases
+├── postinstall.mjs # Resolves/copies the matching optional platform package
+├── publish-npm.mjs # Stages and publishes platform packages + qpq
 ├── postinstall.test.mjs
 └── wrapper.test.mjs
 
@@ -105,10 +106,11 @@ qpq.sh              # npm bin: execs bin/qpq-native
 ## Release Workflow
 
 - `.github/workflows/ci.yml` runs installer tests and Go tests/builds.
-- `.github/workflows/npm.yml` builds native binaries, creates `SHA256SUMS`, uploads them to the GitHub release, then publishes npm.
-- Release assets are named `qpq-linux-*`, `qpq-android-arm64`, `qpq-darwin-*`, `qpq-windows-*.exe`.
-- npm `postinstall` downloads the matching asset and verifies its checksum before writing `bin/qpq-native`.
-- The npm package intentionally supports Linux and macOS (`os` field). Windows users install the release `.exe` directly.
+- `.github/workflows/npm.yml` builds native binaries, creates `SHA256SUMS`, uploads release assets, then publishes the optional platform packages and top-level npm package.
+- Platform package names are `qpq-linux-x64`, `qpq-linux-arm64`, `qpq-linux-armv7`, `qpq-darwin-x64`, and `qpq-darwin-arm64`.
+- Linux platform packages declare `os: ["linux", "android"]` so Termux installs them. The top-level package includes `android` in `os`.
+- npm `postinstall` resolves the matching optional package and writes `bin/qpq-native`; it does not download from GitHub.
+- Windows users install the release `.exe` directly. ARMv6 Raspberry Pi users also use release binaries.
 
 ---
 

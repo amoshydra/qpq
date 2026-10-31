@@ -88,8 +88,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ steps.release.outputs.tag_name }}" go/dist/* --clobber
 
-      - name: Publish to npm
+      - name: Publish npm packages
         if: ${{ steps.release.outputs.release_created == 'true' }}
         # Trusted publishing authenticates with OIDC and generates provenance
         # automatically. NPM_TOKEN is intentionally not used here.
-        run: npm publish --access public
+        run: node scripts/publish-npm.mjs
