@@ -24,7 +24,7 @@ Installer/package tests:
 
 ```bash
 pnpm install
-pnpm test        # node:test launcher tests
+pnpm test        # node:test launcher and packaging tests
 pnpm run lint:package
 ```
 

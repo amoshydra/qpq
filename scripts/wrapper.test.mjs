@@ -82,7 +82,7 @@ test('prefers a binary placed in bin/qpq-native', { skip: isWindows }, () => {
   }
 });
 
-test('resolves a sibling platform package', { skip: isWindows || !platformPackage() }, () => {
+test('resolves a sibling platform package when no postinstall ran', { skip: isWindows || !platformPackage() }, () => {
   const fixture = createFixture();
   const package_ = platformPackage();
 
@@ -98,7 +98,7 @@ test('resolves a sibling platform package', { skip: isWindows || !platformPackag
   }
 });
 
-test('resolves a nested platform package', { skip: isWindows || !platformPackage() }, () => {
+test('resolves a nested platform package when no postinstall ran', { skip: isWindows || !platformPackage() }, () => {
   const fixture = createFixture();
   const package_ = platformPackage();
 
