@@ -34,7 +34,7 @@ A terminal-based command launcher for frequently used commands, built with Go an
 
 ## Installation
 
-The npm package downloads a native Go binary for your platform. Node.js 20+ is required only for the npm install step; `qpq` itself runs a native binary.
+The npm package installs the native Go binary for your platform through an optional npm package. Node.js 20+ is required only for the npm install step; `qpq` itself runs a native binary.
 
 ### Try instantly (no install)
 ```bash
@@ -54,7 +54,7 @@ npm i -g qpq
 qpq
 ```
 
-The npm postinstall step downloads the Android/Termux ARM64 binary automatically. Alternatively, download `qpq-android-arm64` from the latest GitHub release and install it as `qpq`:
+npm installs the ARM64 platform package automatically for Android/Termux. Alternatively, download `qpq-android-arm64` from the latest GitHub release and install it as `qpq`:
 
 ```bash
 curl -LO https://github.com/amoshydra/qpq/releases/latest/download/qpq-android-arm64
@@ -257,7 +257,7 @@ make install PREFIX=/usr/local
 
 ### Installer tooling
 
-The npm package only contains `qpq.sh` and the postinstall downloader. To test those:
+The npm package only contains `qpq.sh` and the postinstall resolver. To test those:
 
 ```bash
 pnpm install
@@ -265,13 +265,13 @@ pnpm test                    # node:test installer and launcher tests
 pnpm run lint:package        # publint
 ```
 
-The npm postinstall downloads the matching native binary from the GitHub release and verifies `SHA256SUMS`. If the download fails, installation fails because there is no Node fallback. In that case, install a release binary manually.
+The npm postinstall resolves the matching platform package (`qpq-linux-arm64`, `qpq-darwin-arm64`, etc.) and copies its binary to `bin/qpq-native`. There is no GitHub download and no Node fallback. If the optional package cannot be resolved, npm installation fails; install a release binary manually in that case.
 
 ## FAQ
 
 ### Why qpq.sh wrapper?
 
-`qpq.sh` resolves the package's `bin/qpq-native` binary and `exec`s it. It exists because npm needs a stable cross-platform entry point while the actual executable is downloaded during postinstall. If the native binary is missing, `qpq` exits with a clear error instead of falling back to a second implementation.
+`qpq.sh` resolves the package's `bin/qpq-native` binary and `exec`s it. It exists because npm needs a stable cross-platform entry point while the actual executable is installed from the matching optional platform package during postinstall. If the native binary is missing, `qpq` exits with a clear error instead of falling back to a second implementation.
 
 ### Why don't directory changes persist after running a command?
 

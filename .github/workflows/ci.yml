@@ -68,3 +68,7 @@ jobs:
 
       - name: Build all target binaries
         run: make cross
+
+      - name: Prepare npm platform packages
+        working-directory: .
+        run: node scripts/publish-npm.mjs --prepare-only

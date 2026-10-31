@@ -25,7 +25,7 @@ Known gaps:
 
 ## Prebuilt binaries
 
-Download the matching binary from the latest GitHub release:
+Download the matching binary from the latest GitHub release, or install via npm (which selects the matching optional platform package):
 
 ```bash
 # Termux (64-bit Android)

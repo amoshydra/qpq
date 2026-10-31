@@ -26,3 +26,6 @@ yarn-error.log*
 Thumbs.db
 # Generated native binary from npm postinstall
 /bin/
+
+# npm staging output
+/build/
