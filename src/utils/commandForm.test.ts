@@ -7,7 +7,9 @@ const existingCommands: Command[] = [
   { id: 2, name: 'Deploy', command: 'deploy.sh' },
 ];
 
-function values(overrides: Partial<{ name: string; command: string; description: string; tags: string }> = {}) {
+function values(
+  overrides: Partial<{ name: string; command: string; description: string; tags: string }> = {},
+) {
   return {
     name: 'Git Log',
     command: 'git log',
@@ -19,12 +21,15 @@ function values(overrides: Partial<{ name: string; command: string; description:
 
 describe('buildCommandFromForm', () => {
   it('builds a command and trims input', () => {
-    const result = buildCommandFromForm(values({
-      name: '  Git Log  ',
-      command: '  git log  ',
-      description: '  Show history  ',
-      tags: ' git, log ',
-    }), existingCommands);
+    const result = buildCommandFromForm(
+      values({
+        name: '  Git Log  ',
+        command: '  git log  ',
+        description: '  Show history  ',
+        tags: ' git, log ',
+      }),
+      existingCommands,
+    );
 
     expect(result).toEqual({
       ok: true,
@@ -44,7 +49,10 @@ describe('buildCommandFromForm', () => {
   });
 
   it('falls back to the command text when the name is empty', () => {
-    const result = buildCommandFromForm(values({ name: ' ', command: 'echo hello' }), existingCommands);
+    const result = buildCommandFromForm(
+      values({ name: ' ', command: 'echo hello' }),
+      existingCommands,
+    );
 
     expect(result).toEqual({
       ok: true,
@@ -58,7 +66,10 @@ describe('buildCommandFromForm', () => {
   });
 
   it('rejects duplicate names case-insensitively', () => {
-    const result = buildCommandFromForm(values({ name: 'git status', command: 'git status --short' }), existingCommands);
+    const result = buildCommandFromForm(
+      values({ name: 'git status', command: 'git status --short' }),
+      existingCommands,
+    );
 
     expect(result).toEqual({ ok: false, error: 'A command named "git status" already exists.' });
   });
@@ -84,11 +95,14 @@ describe('buildCommandFromForm', () => {
   });
 
   it('deduplicates tags and omits empty optional fields', () => {
-    const result = buildCommandFromForm(values({
-      name: 'Tagged',
-      command: 'tagged',
-      tags: 'one, one, two',
-    }), existingCommands);
+    const result = buildCommandFromForm(
+      values({
+        name: 'Tagged',
+        command: 'tagged',
+        tags: 'one, one, two',
+      }),
+      existingCommands,
+    );
 
     expect(result.ok && result.command.tags).toEqual(['one', 'two']);
     expect(result.ok && result.command.description).toBeUndefined();

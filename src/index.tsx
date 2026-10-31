@@ -45,7 +45,9 @@ if (helpFlag) {
 }
 
 if (versionFlag) {
-  const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
+  const packageJson = JSON.parse(
+    fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8'),
+  );
   console.log(`qpq v${packageJson.version}`);
   process.exit(0);
 }

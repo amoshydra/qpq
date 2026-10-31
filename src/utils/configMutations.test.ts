@@ -15,11 +15,7 @@ function makeCommand(id: number, name: string): Command {
 
 function makeConfig(): Config {
   return {
-    commands: [
-      makeCommand(1, 'Alpha'),
-      makeCommand(2, 'Beta'),
-      makeCommand(3, 'Gamma'),
-    ],
+    commands: [makeCommand(1, 'Alpha'), makeCommand(2, 'Beta'), makeCommand(3, 'Gamma')],
     favorites: [2],
     recent: [
       { id: 3, timestamp: 300 },
@@ -70,7 +66,7 @@ describe('duplicateCommand', () => {
     const firstCopy = duplicateCommand(config, config.commands[1]);
     const secondCopy = duplicateCommand(firstCopy, config.commands[1]);
 
-    expect(secondCopy.commands.map(command => command.name)).toContain('Beta (Copy 2)');
+    expect(secondCopy.commands.map((command) => command.name)).toContain('Beta (Copy 2)');
   });
 });
 
@@ -86,7 +82,7 @@ describe('updateCommand', () => {
     expect(updated.commands[1].name).toBe('Beta Updated');
     expect(updated.favorites).toEqual(config.favorites);
     expect(updated.recent).toEqual(config.recent);
-    expect(updated.recent.map(entry => entry.timestamp)).toEqual([300, 100]);
+    expect(updated.recent.map((entry) => entry.timestamp)).toEqual([300, 100]);
   });
 
   it('leaves commands unchanged when the id does not exist', () => {
@@ -102,7 +98,7 @@ describe('removeCommand', () => {
     const config = makeConfig();
     const updated = removeCommand(config, 3);
 
-    expect(updated.commands.map(command => command.id)).toEqual([1, 2]);
+    expect(updated.commands.map((command) => command.id)).toEqual([1, 2]);
     expect(updated.favorites).toEqual([2]);
     expect(updated.recent).toEqual([{ id: 1, timestamp: 100 }]);
   });

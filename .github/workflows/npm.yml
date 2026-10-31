@@ -59,6 +59,14 @@ jobs:
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: pnpm run test:run
 
+      - name: Lint
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: pnpm run lint
+
+      - name: Check formatting
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: pnpm run format:check
+
       - name: Type check
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: pnpm run type-check

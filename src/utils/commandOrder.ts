@@ -5,10 +5,10 @@ export function orderCommands(
   favorites: number[],
   timestamps: Map<number, number>,
 ): Command[] {
-  const favoriteCommands = commands.filter(command => favorites.includes(command.id));
+  const favoriteCommands = commands.filter((command) => favorites.includes(command.id));
 
   const otherCommands = commands
-    .filter(command => !favorites.includes(command.id))
+    .filter((command) => !favorites.includes(command.id))
     .sort((a, b) => {
       const aTime = timestamps.get(a.id) || 0;
       const bTime = timestamps.get(b.id) || 0;
@@ -33,7 +33,7 @@ export function getSelectedIndex(commands: Command[], selectedId: number | null)
     return 0;
   }
 
-  const index = commands.findIndex(command => command.id === selectedId);
+  const index = commands.findIndex((command) => command.id === selectedId);
 
   return index >= 0 ? index : 0;
 }

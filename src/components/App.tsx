@@ -19,12 +19,23 @@ import {
 } from '../utils/configMutations.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
 import { CommandMenu } from './CommandMenu.js';
+import { ErrorScreen, type UiError } from './ErrorScreen.js';
 
-const AddCommandForm = lazy(() => import('./AddCommandForm.js').then(module => ({ default: module.AddCommandForm })));
-const CommandSearch = lazy(() => import('./CommandSearch.js').then(module => ({ default: module.CommandSearch })));
-const DeleteConfirmation = lazy(() => import('./DeleteConfirmation.js').then(module => ({ default: module.DeleteConfirmation })));
-const EditCommandForm = lazy(() => import('./EditCommandForm.js').then(module => ({ default: module.EditCommandForm })));
-const TemplatePrompt = lazy(() => import('./TemplatePrompt.js').then(module => ({ default: module.TemplatePrompt })));
+const AddCommandForm = lazy(() =>
+  import('./AddCommandForm.js').then((module) => ({ default: module.AddCommandForm })),
+);
+const CommandSearch = lazy(() =>
+  import('./CommandSearch.js').then((module) => ({ default: module.CommandSearch })),
+);
+const DeleteConfirmation = lazy(() =>
+  import('./DeleteConfirmation.js').then((module) => ({ default: module.DeleteConfirmation })),
+);
+const EditCommandForm = lazy(() =>
+  import('./EditCommandForm.js').then((module) => ({ default: module.EditCommandForm })),
+);
+const TemplatePrompt = lazy(() =>
+  import('./TemplatePrompt.js').then((module) => ({ default: module.TemplatePrompt })),
+);
 
 type AppMode = 'menu' | 'search' | 'template' | 'add' | 'edit_command';
 
@@ -40,10 +51,13 @@ interface AppState {
   deleteCommand: Command | null;
 }
 
-function actionError(action: string, error: unknown): string {
+function actionError(action: string, error: unknown): UiError {
   const message = error instanceof Error ? error.message : String(error);
 
-  return `Failed to ${action}: ${message}`;
+  return {
+    message: `Failed to ${action}: ${message}`,
+    recoverable: true,
+  };
 }
 
 async function persistMutation(mutator: (config: Config) => Config): Promise<Config> {
@@ -70,7 +84,7 @@ export function App() {
     deleteCommand: null,
   }));
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UiError | null>(null);
   const commandSelected = useRef(false);
 
   useEffect(() => {
@@ -86,11 +100,14 @@ export function App() {
 
         if (config === null) {
           const configPath = getDefaultConfigPath();
-          setError(`Failed to load config file. The file at "${configPath}" appears to be corrupted or invalid.
+          setError({
+            message: `Failed to load config file. The file at "${configPath}" appears to be corrupted or invalid.
 
 You can fix this by:
 1. Opening the file and correcting the syntax
-2. Deleting the file to regenerate it with defaults`);
+2. Deleting the file to regenerate it with defaults`,
+            recoverable: false,
+          });
           setLoading(false);
           return;
         }
@@ -101,7 +118,9 @@ You can fix this by:
           mode: 'menu',
           commands: config.commands,
           recentCommands: recentData.commands,
-          commandTimestamps: new Map(recentData.timestamps.map(entry => [entry.id, entry.timestamp])),
+          commandTimestamps: new Map(
+            recentData.timestamps.map((entry) => [entry.id, entry.timestamp]),
+          ),
           favorites: config.favorites,
           selectedCommand: null,
           editingCommand: null,
@@ -111,7 +130,10 @@ You can fix this by:
         setLoading(false);
       } catch (initError) {
         if (!cancelled) {
-          setError(initError instanceof Error ? initError.message : 'Failed to load config');
+          setError({
+            message: initError instanceof Error ? initError.message : 'Failed to load config',
+            recoverable: false,
+          });
           setLoading(false);
         }
       }
@@ -128,7 +150,7 @@ You can fix this by:
     const placeholders = extractPlaceholders(command.command);
 
     if (placeholders.length > 0) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         mode: 'template',
         selectedCommand: command,
@@ -178,21 +200,23 @@ You can fix this by:
   };
 
   const handleSwitchToSearch = () => {
-    setState(prev => ({ ...prev, mode: 'search' }));
+    setState((prev) => ({ ...prev, mode: 'search' }));
   };
 
   const handleSwitchToMenu = () => {
-    setState(prev => ({ ...prev, mode: 'menu' }));
+    setState((prev) => ({ ...prev, mode: 'menu' }));
   };
 
   const handleTemplateCancel = () => {
-    setState(prev => ({ ...prev, mode: 'menu' }));
+    setState((prev) => ({ ...prev, mode: 'menu' }));
   };
 
   const handleToggleFavorite = async (commandId: number) => {
     try {
-      const updatedConfig = await persistMutation(config => toggleFavoriteInConfig(config, commandId));
-      setState(prev => ({ ...prev, favorites: updatedConfig.favorites }));
+      const updatedConfig = await persistMutation((config) =>
+        toggleFavoriteInConfig(config, commandId),
+      );
+      setState((prev) => ({ ...prev, favorites: updatedConfig.favorites }));
     } catch (favoriteError) {
       setError(actionError('update favorites', favoriteError));
     }
@@ -200,8 +224,8 @@ You can fix this by:
 
   const handleAddCommand = async (command: Command) => {
     try {
-      const updatedConfig = await persistMutation(config => addCommand(config, command));
-      setState(prev => ({
+      const updatedConfig = await persistMutation((config) => addCommand(config, command));
+      setState((prev) => ({
         ...prev,
         mode: 'menu',
         commands: updatedConfig.commands,
@@ -212,11 +236,11 @@ You can fix this by:
   };
 
   const handleAddCancel = () => {
-    setState(prev => ({ ...prev, mode: 'menu' }));
+    setState((prev) => ({ ...prev, mode: 'menu' }));
   };
 
   const handleEditCommand = (command: Command) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       mode: 'edit_command',
       editingCommand: command,
@@ -225,8 +249,8 @@ You can fix this by:
 
   const handleDuplicateCommand = async (command: Command) => {
     try {
-      const updatedConfig = await persistMutation(config => duplicateCommand(config, command));
-      setState(prev => ({
+      const updatedConfig = await persistMutation((config) => duplicateCommand(config, command));
+      setState((prev) => ({
         ...prev,
         commands: updatedConfig.commands,
       }));
@@ -237,15 +261,17 @@ You can fix this by:
 
   const handleEditSubmit = async (updatedCommand: Command) => {
     try {
-      const updatedConfig = await persistMutation(config => updateCommand(config, updatedCommand));
-      setState(prev => ({
+      const updatedConfig = await persistMutation((config) =>
+        updateCommand(config, updatedCommand),
+      );
+      setState((prev) => ({
         ...prev,
         mode: 'menu',
         commands: updatedConfig.commands,
         editingCommand: null,
-        recentCommands: prev.recentCommands.map(command => (
-          command.id === updatedCommand.id ? updatedCommand : command
-        )),
+        recentCommands: prev.recentCommands.map((command) =>
+          command.id === updatedCommand.id ? updatedCommand : command,
+        ),
       }));
     } catch (editError) {
       setError(actionError('save the command', editError));
@@ -253,14 +279,14 @@ You can fix this by:
   };
 
   const handleCommandEditCancel = () => {
-    setState(prev => ({ ...prev, mode: 'menu', editingCommand: null }));
+    setState((prev) => ({ ...prev, mode: 'menu', editingCommand: null }));
   };
 
   const handleShowDeleteConfirm = (commandId: number) => {
-    const command = state.commands.find(existing => existing.id === commandId);
+    const command = state.commands.find((existing) => existing.id === commandId);
 
     if (command) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         showDeleteConfirm: true,
         deleteCommand: command,
@@ -269,7 +295,7 @@ You can fix this by:
   };
 
   const handleHideDeleteConfirm = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       showDeleteConfirm: false,
       deleteCommand: null,
@@ -278,9 +304,9 @@ You can fix this by:
 
   const handleDeleteCommand = async (commandId: number) => {
     try {
-      const updatedConfig = await persistMutation(config => removeCommand(config, commandId));
+      const updatedConfig = await persistMutation((config) => removeCommand(config, commandId));
 
-      setState(prev => {
+      setState((prev) => {
         const commandTimestamps = new Map(prev.commandTimestamps);
         commandTimestamps.delete(commandId);
 
@@ -291,7 +317,7 @@ You can fix this by:
           deleteCommand: null,
           commands: updatedConfig.commands,
           favorites: updatedConfig.favorites,
-          recentCommands: prev.recentCommands.filter(command => command.id !== commandId),
+          recentCommands: prev.recentCommands.filter((command) => command.id !== commandId),
           commandTimestamps,
         };
       });
@@ -300,21 +326,34 @@ You can fix this by:
     }
   };
 
-  const loadingFallback = <Box><Text>Loading...</Text></Box>;
+  const handleDismissError = () => {
+    setError(null);
+    setState((prev) => ({
+      ...prev,
+      mode: 'menu',
+      selectedCommand: null,
+      editingCommand: null,
+      showDeleteConfirm: false,
+      deleteCommand: null,
+    }));
+  };
+
+  const loadingFallback = (
+    <Box>
+      <Text>Loading...</Text>
+    </Box>
+  );
 
   if (loading) {
-    return <Box><Text>Loading...</Text></Box>;
+    return (
+      <Box>
+        <Text>Loading...</Text>
+      </Box>
+    );
   }
 
   if (error) {
-    return (
-      <Box flexDirection="column">
-        <Text color="red">{error}</Text>
-        <Box marginTop={1}>
-          <Text dimColor>Press Ctrl+C to quit.</Text>
-        </Box>
-      </Box>
-    );
+    return <ErrorScreen error={error} onDismiss={handleDismissError} />;
   }
 
   if (state.mode === 'template' && state.selectedCommand) {
@@ -393,7 +432,7 @@ You can fix this by:
       onSelect={handleSelectCommand}
       onSwitchToSearch={handleSwitchToSearch}
       onToggleFavorite={handleToggleFavorite}
-      onAdd={() => setState(prev => ({ ...prev, mode: 'add' }))}
+      onAdd={() => setState((prev) => ({ ...prev, mode: 'add' }))}
       onDelete={handleShowDeleteConfirm}
       onEdit={handleEditCommand}
       onDuplicate={handleDuplicateCommand}

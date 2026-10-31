@@ -21,7 +21,9 @@ export function CommandItem({ command, isSelected, index, isFavorite = false }: 
         </Text>
       </Box>
       <Box flexGrow={1} overflowX="hidden">
-        <Text dimColor wrap="truncate-end">{command.description || ''}</Text>
+        <Text dimColor wrap="truncate-end">
+          {command.description || ''}
+        </Text>
       </Box>
     </Box>
   );

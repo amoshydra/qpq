@@ -60,7 +60,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(item => typeof item === 'string');
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
 function isCommandRecord(value: unknown): value is RawCommand {
@@ -68,12 +68,14 @@ function isCommandRecord(value: unknown): value is RawCommand {
     return false;
   }
 
-  return typeof value.name === 'string'
-    && typeof value.command === 'string'
-    && (value.id === undefined || typeof value.id === 'number')
-    && (value.description === undefined || typeof value.description === 'string')
-    && (value.tags === undefined || isStringArray(value.tags))
-    && (value.aliases === undefined || isStringArray(value.aliases));
+  return (
+    typeof value.name === 'string' &&
+    typeof value.command === 'string' &&
+    (value.id === undefined || typeof value.id === 'number') &&
+    (value.description === undefined || typeof value.description === 'string') &&
+    (value.tags === undefined || isStringArray(value.tags)) &&
+    (value.aliases === undefined || isStringArray(value.aliases))
+  );
 }
 
 function parseConfig(content: string): RawConfig | null {
@@ -85,7 +87,11 @@ function parseConfig(content: string): RawConfig | null {
     return null;
   }
 
-  if (!isRecord(parsed) || !Array.isArray(parsed.commands) || !parsed.commands.every(isCommandRecord)) {
+  if (
+    !isRecord(parsed) ||
+    !Array.isArray(parsed.commands) ||
+    !parsed.commands.every(isCommandRecord)
+  ) {
     return null;
   }
 
@@ -106,7 +112,7 @@ function parseConfig(content: string): RawConfig | null {
 }
 
 function normalizeConfig(raw: RawConfig): Config {
-  const commands: Command[] = raw.commands.map(command => ({
+  const commands: Command[] = raw.commands.map((command) => ({
     ...command,
     id: command.id ?? 0,
   }));
@@ -115,10 +121,10 @@ function normalizeConfig(raw: RawConfig): Config {
 
   for (const command of commands) {
     if (
-      typeof command.id !== 'number'
-      || !Number.isInteger(command.id)
-      || command.id < 1
-      || usedIds.has(command.id)
+      typeof command.id !== 'number' ||
+      !Number.isInteger(command.id) ||
+      command.id < 1 ||
+      usedIds.has(command.id)
     ) {
       command.id = nextId;
     }
@@ -127,7 +133,7 @@ function normalizeConfig(raw: RawConfig): Config {
     nextId = Math.max(nextId, command.id + 1);
   }
 
-  const idByName = new Map(commands.map(command => [command.name, command.id]));
+  const idByName = new Map(commands.map((command) => [command.name, command.id]));
   const favorites: number[] = [];
 
   for (const favorite of raw.favorites) {
@@ -148,14 +154,11 @@ function normalizeConfig(raw: RawConfig): Config {
 
     const id = typeof entry.name === 'string' ? idByName.get(entry.name) : entry.id;
 
-    if (
-      typeof id === 'number'
-      && usedIds.has(id)
-      && !recentIds.has(id)
-    ) {
-      const timestamp = typeof entry.timestamp === 'number' && Number.isFinite(entry.timestamp)
-        ? entry.timestamp
-        : 0;
+    if (typeof id === 'number' && usedIds.has(id) && !recentIds.has(id)) {
+      const timestamp =
+        typeof entry.timestamp === 'number' && Number.isFinite(entry.timestamp)
+          ? entry.timestamp
+          : 0;
 
       recent.push({ id, timestamp });
       recentIds.add(id);
@@ -220,7 +223,7 @@ async function migrateFromLegacyFiles(configPath: string): Promise<Config | null
   const legacyFavoritesPath = getLegacyFavoritesPath();
   const legacyRecentPath = getLegacyRecentPath();
 
-  if (!await fileExists(legacyFavPath)) {
+  if (!(await fileExists(legacyFavPath))) {
     return null;
   }
 
@@ -275,7 +278,9 @@ async function migrateFromLegacyFiles(configPath: string): Promise<Config | null
 
     return unifiedConfig;
   } catch (error) {
-    throw new Error(`Failed to migrate legacy config files: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to migrate legacy config files: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -285,7 +290,7 @@ export async function loadConfig(customPath?: string): Promise<Config | null> {
   try {
     await ensureConfigDir();
 
-    if (!await fileExists(configPath)) {
+    if (!(await fileExists(configPath))) {
       const migratedConfig = await migrateFromLegacyFiles(configPath);
 
       if (migratedConfig) {
@@ -313,12 +318,15 @@ export async function loadConfig(customPath?: string): Promise<Config | null> {
 export async function saveConfig(config: Config): Promise<void> {
   const configPath = getConfigPath();
   await ensureConfigDir();
-  await writeConfigFile(configPath, normalizeConfig({
-    commands: config.commands,
-    favorites: config.favorites,
-    recent: config.recent,
-    nextId: config.nextId,
-  }));
+  await writeConfigFile(
+    configPath,
+    normalizeConfig({
+      commands: config.commands,
+      favorites: config.favorites,
+      recent: config.recent,
+      nextId: config.nextId,
+    }),
+  );
 }
 
 let mutationQueue: Promise<void> = Promise.resolve();
@@ -340,7 +348,10 @@ export async function mutateConfig(mutator: (config: Config) => Config): Promise
     return updatedConfig;
   });
 
-  mutationQueue = result.then(() => undefined, () => undefined);
+  mutationQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
 
   return result;
 }
@@ -353,22 +364,22 @@ export function getRecentWithCommands(config: Config): {
   commands: Command[];
   timestamps: RecentCommand[];
 } {
-  const commandsById = new Map(config.commands.map(command => [command.id, command]));
-  const validRecent = config.recent.filter(entry => commandsById.has(entry.id));
+  const commandsById = new Map(config.commands.map((command) => [command.id, command]));
+  const validRecent = config.recent.filter((entry) => commandsById.has(entry.id));
   const commands = validRecent
-    .map(entry => commandsById.get(entry.id))
+    .map((entry) => commandsById.get(entry.id))
     .filter((command): command is Command => command !== undefined);
 
   return { commands, timestamps: validRecent };
 }
 
 export async function saveRecent(command: { id: number }): Promise<void> {
-  await mutateConfig(config => {
-    if (!config.commands.some(existing => existing.id === command.id)) {
+  await mutateConfig((config) => {
+    if (!config.commands.some((existing) => existing.id === command.id)) {
       return config;
     }
 
-    const recent = config.recent.filter(entry => entry.id !== command.id);
+    const recent = config.recent.filter((entry) => entry.id !== command.id);
 
     recent.unshift({
       id: command.id,

@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { AddCommandForm } from '../components/AddCommandForm.js';
 import { CommandForm } from '../components/CommandForm.js';
 import { CommandMenu } from '../components/CommandMenu.js';
 import { CommandSearch } from '../components/CommandSearch.js';
 import { DeleteConfirmation } from '../components/DeleteConfirmation.js';
+import { ErrorScreen } from '../components/ErrorScreen.js';
+import { TemplatePrompt } from '../components/TemplatePrompt.js';
 import type { Command } from '../types/command.js';
 import { renderForTest } from './ink.js';
+
+vi.mock('../utils/shellHistory.js', () => ({
+  getLastCommands: vi.fn(async () => ['echo one', 'echo two']),
+}));
 
 const alpha: Command = { id: 1, name: 'Alpha', command: 'echo alpha' };
 const beta: Command = { id: 2, name: 'Beta', command: 'echo beta' };
@@ -160,11 +167,7 @@ describe('DeleteConfirmation', () => {
   it('confirms only once even if Enter is pressed repeatedly', async () => {
     const onConfirm = vi.fn(async () => {});
     const app = await renderForTest(
-      <DeleteConfirmation
-        command={alpha}
-        onConfirm={onConfirm}
-        onCancel={() => {}}
-      />,
+      <DeleteConfirmation command={alpha} onConfirm={onConfirm} onCancel={() => {}} />,
     );
 
     try {
@@ -173,6 +176,110 @@ describe('DeleteConfirmation', () => {
       await app.send('\r');
 
       expect(onConfirm).toHaveBeenCalledTimes(1);
+    } finally {
+      app.unmount();
+    }
+  });
+});
+
+describe('AddCommandForm', () => {
+  it('selects the first shell history entry and submits it as a command', async () => {
+    const onSubmit = vi.fn();
+    const app = await renderForTest(
+      <AddCommandForm existingCommands={[]} onSubmit={onSubmit} onCancel={() => {}} />,
+    );
+
+    try {
+      await vi.waitFor(() => {
+        expect(app.text()).toContain('echo one');
+      });
+
+      await app.send('\r');
+
+      await vi.waitFor(() => {
+        expect(app.text()).toContain('Add New Command');
+      });
+
+      for (let index = 0; index < 4; index += 1) {
+        await app.send('\r');
+      }
+
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'echo one', command: 'echo one' }),
+      );
+    } finally {
+      app.unmount();
+    }
+  });
+});
+
+describe('TemplatePrompt', () => {
+  it('collects placeholders in order and submits their values', async () => {
+    const onSubmit = vi.fn();
+    const app = await renderForTest(
+      <TemplatePrompt
+        placeholders={[
+          { name: 'host', sortIndex: 0 },
+          { name: 'port', sortIndex: 0 },
+        ]}
+        onSubmit={onSubmit}
+        onCancel={() => {}}
+      />,
+    );
+
+    try {
+      for (const character of 'localhost') {
+        await app.send(character);
+      }
+
+      await app.send('\r');
+
+      for (const character of '8080') {
+        await app.send(character);
+      }
+
+      await app.send('\r');
+
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledWith({ host: 'localhost', port: '8080' });
+    } finally {
+      app.unmount();
+    }
+  });
+});
+
+describe('ErrorScreen', () => {
+  it('dismisses recoverable errors with Escape', async () => {
+    const onDismiss = vi.fn();
+    const app = await renderForTest(
+      <ErrorScreen error={{ message: 'Save failed', recoverable: true }} onDismiss={onDismiss} />,
+    );
+
+    try {
+      await app.send('\x1B');
+
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    } finally {
+      app.unmount();
+    }
+  });
+
+  it('does not dismiss fatal errors', async () => {
+    const onDismiss = vi.fn();
+    const app = await renderForTest(
+      <ErrorScreen
+        error={{ message: 'Config corrupt', recoverable: false }}
+        onDismiss={onDismiss}
+      />,
+    );
+
+    try {
+      await app.send('\x1B');
+      await app.send('\r');
+
+      expect(onDismiss).not.toHaveBeenCalled();
+      expect(app.text()).toContain('Press Ctrl+C to quit.');
     } finally {
       app.unmount();
     }

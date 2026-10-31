@@ -9,7 +9,7 @@ function getNextId(config: Config): number {
 }
 
 function getCopyName(commands: Command[], baseName: string): string {
-  const existingNames = new Set(commands.map(command => command.name));
+  const existingNames = new Set(commands.map((command) => command.name));
   let candidate = `${baseName} (Copy)`;
   let copyNumber = 2;
 
@@ -51,30 +51,30 @@ export function duplicateCommand(config: Config, command: Command): Config {
 export function updateCommand(config: Config, command: Command): Config {
   return {
     ...config,
-    commands: config.commands.map(existing => existing.id === command.id ? command : existing),
+    commands: config.commands.map((existing) => (existing.id === command.id ? command : existing)),
   };
 }
 
 export function removeCommand(config: Config, commandId: number): Config {
   return {
     ...config,
-    commands: config.commands.filter(command => command.id !== commandId),
-    favorites: config.favorites.filter(id => id !== commandId),
-    recent: config.recent.filter(entry => entry.id !== commandId),
+    commands: config.commands.filter((command) => command.id !== commandId),
+    favorites: config.favorites.filter((id) => id !== commandId),
+    recent: config.recent.filter((entry) => entry.id !== commandId),
   };
 }
 
 export function toggleFavorite(config: Config, commandId: number): Config {
   const isFavorite = config.favorites.includes(commandId);
 
-  if (!config.commands.some(command => command.id === commandId)) {
+  if (!config.commands.some((command) => command.id === commandId)) {
     return config;
   }
 
   return {
     ...config,
     favorites: isFavorite
-      ? config.favorites.filter(id => id !== commandId)
+      ? config.favorites.filter((id) => id !== commandId)
       : [...config.favorites, commandId],
   };
 }

@@ -44,7 +44,7 @@ export function stripAnsi(value: string): string {
 }
 
 const tick = async (): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
 export async function renderForTest(element: ReactElement) {
@@ -67,6 +67,9 @@ export async function renderForTest(element: ReactElement) {
     stdout,
     instance,
     text: () => stripAnsi(stdout.output),
+    clearOutput(): void {
+      stdout.output = '';
+    },
     async send(input: string): Promise<void> {
       stdin.send(input);
       await tick();

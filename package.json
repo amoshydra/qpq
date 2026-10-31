@@ -23,6 +23,9 @@
     "dev": "tsx src/index.tsx",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts,json}\"",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
@@ -51,14 +54,21 @@
     "react": "^19.2.4"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.1",
     "@vitest/ui": "^4.0.18",
     "esbuild": "^0.27.3",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
     "husky": "^9.1.7",
+    "prettier": "^3.9.10",
     "publint": "^0.3.25",
     "tsx": "^4.19.4",
     "typescript": "^5.8.2",
+    "typescript-eslint": "^8.72.1",
     "vitest": "^4.0.18"
   }
 }

@@ -37,26 +37,14 @@ export function DeleteConfirmation({ command, onConfirm, onCancel }: DeleteConfi
   }
 
   return (
-    <Box
-      borderStyle="round"
-      borderColor="yellow"
-      padding={1}
-      flexDirection="column"
-      gap={1}
-    >
+    <Box borderStyle="round" borderColor="yellow" padding={1} flexDirection="column" gap={1}>
       <Box>
         <Text color="yellow" bold>
           Delete command: {command.name}
         </Text>
       </Box>
-      <Box
-        borderStyle="round"
-        borderColor="gray"
-        padding={1}
-      >
-        <Text>
-          {command.command}
-        </Text>
+      <Box borderStyle="round" borderColor="gray" padding={1}>
+        <Text>{command.command}</Text>
       </Box>
       <Box>
         <Text color="white">Are you sure? (Y/n)</Text>

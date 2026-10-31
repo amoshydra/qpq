@@ -33,7 +33,7 @@ describe('config', () => {
       expect(config?.commands.length).toBeGreaterThan(0);
       expect(config?.favorites).toEqual([]);
       expect(config?.recent).toEqual([]);
-      expect(config?.commands.every(command => command.id > 0)).toBe(true);
+      expect(config?.commands.every((command) => command.id > 0)).toBe(true);
     });
 
     it('loads a valid config', async () => {
@@ -67,7 +67,7 @@ describe('config', () => {
 
       const config = await loadConfig();
 
-      expect(config?.commands.map(command => command.id)).toEqual([1, 2]);
+      expect(config?.commands.map((command) => command.id)).toEqual([1, 2]);
       expect(config?.favorites).toEqual([2]);
       expect(config?.recent).toEqual([{ id: 1, timestamp: 123 }]);
       expect(config?.nextId).toBe(3);
@@ -86,7 +86,7 @@ describe('config', () => {
 
       const config = await loadConfig();
 
-      expect(config?.commands.map(command => command.id)).toEqual([1, 2]);
+      expect(config?.commands.map((command) => command.id)).toEqual([1, 2]);
       expect(config?.nextId).toBe(3);
     });
 
@@ -200,7 +200,9 @@ describe('config', () => {
         nextId: 2,
       });
 
-      const parsed = JSON.parse(await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'));
+      const parsed = JSON.parse(
+        await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'),
+      );
       expect(parsed.commands[0].name).toBe('New');
     });
   });
@@ -223,7 +225,7 @@ describe('config', () => {
 
       const result = getRecentWithCommands(config);
 
-      expect(result.commands.map(command => command.id)).toEqual([2, 1]);
+      expect(result.commands.map((command) => command.id)).toEqual([2, 1]);
       expect(result.timestamps).toEqual([
         { id: 2, timestamp: 200 },
         { id: 1, timestamp: 100 },
@@ -249,7 +251,9 @@ describe('config', () => {
 
       await saveRecent({ id: 1 });
 
-      const saved = JSON.parse(await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'));
+      const saved = JSON.parse(
+        await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'),
+      );
       expect(saved.recent.map((entry: { id: number }) => entry.id)).toEqual([1, 2]);
       expect(saved.recent).toHaveLength(2);
       expect(saved.recent[0].timestamp).toBeGreaterThan(100);
@@ -266,7 +270,9 @@ describe('config', () => {
 
       await saveRecent({ id: 99 });
 
-      const saved = JSON.parse(await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'));
+      const saved = JSON.parse(
+        await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'),
+      );
       expect(saved.recent).toEqual([]);
     });
   });
@@ -282,19 +288,21 @@ describe('config', () => {
       await fs.promises.writeFile(path.join(testDir, 'config.json'), JSON.stringify(config));
 
       await Promise.all([
-        mutateConfig(current => ({
+        mutateConfig((current) => ({
           ...current,
           commands: [...current.commands, { id: 2, name: 'Beta', command: 'echo beta' }],
           nextId: 3,
         })),
-        mutateConfig(current => ({
+        mutateConfig((current) => ({
           ...current,
           commands: [...current.commands, { id: 3, name: 'Gamma', command: 'echo gamma' }],
           nextId: 4,
         })),
       ]);
 
-      const saved = JSON.parse(await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'));
+      const saved = JSON.parse(
+        await fs.promises.readFile(path.join(testDir, 'config.json'), 'utf-8'),
+      );
       expect(saved.commands.map((command: { id: number }) => command.id)).toEqual([1, 2, 3]);
       expect(saved.nextId).toBe(4);
     });
@@ -303,7 +311,7 @@ describe('config', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       await fs.promises.writeFile(path.join(testDir, 'config.json'), 'not valid json');
 
-      await expect(mutateConfig(current => current)).resolves.toBeNull();
+      await expect(mutateConfig((current) => current)).resolves.toBeNull();
     });
   });
 });

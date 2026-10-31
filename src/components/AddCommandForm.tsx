@@ -29,7 +29,7 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
 
         if (!cancelled) {
           setHistoryCommands(commands);
-          setHistoryIndex(current => (current < 0 && commands.length > 0 ? 0 : current));
+          setHistoryIndex((current) => (current < 0 && commands.length > 0 ? 0 : current));
         }
       } catch {
         if (!cancelled) {
@@ -78,14 +78,14 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
 
     if (action === 'previous') {
       if (historyCommands.length > 0) {
-        setHistoryIndex(prev => (prev < 0 ? 0 : prev > 0 ? prev - 1 : prev));
+        setHistoryIndex((prev) => (prev < 0 ? 0 : prev > 0 ? prev - 1 : prev));
       }
       return;
     }
 
     if (action === 'next') {
       if (historyCommands.length > 0) {
-        setHistoryIndex(prev => (prev < historyCommands.length - 1 ? prev + 1 : prev));
+        setHistoryIndex((prev) => (prev < historyCommands.length - 1 ? prev + 1 : prev));
       }
     }
   });
@@ -94,7 +94,9 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text color="cyan" bold>Add Command - Shell History</Text>
+          <Text color="cyan" bold>
+            Add Command - Shell History
+          </Text>
         </Box>
 
         {!historyLoaded ? (
@@ -137,7 +139,9 @@ export function AddCommandForm({ existingCommands, onSubmit, onCancel }: AddComm
 
   return (
     <CommandForm
-      initialValues={selectedCommandFromHistory ? { command: selectedCommandFromHistory } : undefined}
+      initialValues={
+        selectedCommandFromHistory ? { command: selectedCommandFromHistory } : undefined
+      }
       existingCommands={existingCommands}
       onSubmit={onSubmit}
       onCancel={onCancel}

@@ -219,10 +219,13 @@ qpq does not sandbox commands. It evaluates the selected command in your shell, 
 pnpm install         # Install dependencies
 pnpm run dev         # Run with tsx (auto-reload)
 pnpm run build       # Compile to dist/
-pnpm run type-check  # TypeScript checks
-pnpm run test        # Run tests in watch mode
-pnpm run test:run    # Run tests once
-pnpm start           # Run the built app
+pnpm run type-check   # TypeScript checks
+pnpm run lint         # ESLint
+pnpm run format       # Format source with Prettier
+pnpm run format:check # Verify formatting
+pnpm run test         # Run tests in watch mode
+pnpm run test:run     # Run tests once
+pnpm start            # Run the built app
 ```
 
 `pnpm run dev` and `pnpm start` render the TUI but do not execute selected commands. Use the wrapper after building to test the full flow:
@@ -287,3 +290,5 @@ If the config file is corrupted, the app will show:
 3. Instructions to fix manually
 
 Config writes are atomic, so a failed save does not leave a partially-written config behind. The app does not automatically repair or overwrite a corrupted config file.
+
+If a save fails while using the app, the error is recoverable: press Enter or Escape to dismiss it and return to the menu. Config load errors are fatal because there is no valid configuration to return to.

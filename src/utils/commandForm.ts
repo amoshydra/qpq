@@ -8,8 +8,7 @@ export interface CommandFormValues {
 }
 
 export type CommandFormResult =
-  | { ok: true; command: Omit<Command, 'id'> }
-  | { ok: false; error: string };
+  { ok: true; command: Omit<Command, 'id'> } | { ok: false; error: string };
 
 export function buildCommandFromForm(
   values: CommandFormValues,
@@ -23,21 +22,23 @@ export function buildCommandFromForm(
   }
 
   const name = values.name.trim() || command;
-  const duplicate = existingCommands.find(existing => (
-    existing.id !== editingCommandId
-    && existing.name.trim().toLowerCase() === name.toLowerCase()
-  ));
+  const duplicate = existingCommands.find(
+    (existing) =>
+      existing.id !== editingCommandId && existing.name.trim().toLowerCase() === name.toLowerCase(),
+  );
 
   if (duplicate) {
     return { ok: false, error: `A command named "${name}" already exists.` };
   }
 
-  const tags = [...new Set(
-    values.tags
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(Boolean),
-  )];
+  const tags = [
+    ...new Set(
+      values.tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    ),
+  ];
   const description = values.description.trim();
 
   return {

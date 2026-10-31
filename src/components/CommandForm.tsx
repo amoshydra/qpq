@@ -14,7 +14,12 @@ interface CommandFormProps {
   onCancel: () => void;
 }
 
-export function CommandForm({ initialValues, existingCommands, onSubmit, onCancel }: CommandFormProps) {
+export function CommandForm({
+  initialValues,
+  existingCommands,
+  onSubmit,
+  onCancel,
+}: CommandFormProps) {
   const [formField, setFormField] = useState<FormField>('name');
   const [name, setName] = useState(initialValues?.name || '');
   const [command, setCommand] = useState(initialValues?.command || '');
@@ -95,9 +100,13 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
     <Box flexDirection="column">
       <Box marginBottom={1}>
         {isEditing ? (
-          <Text color="yellow" bold>Edit Command</Text>
+          <Text color="yellow" bold>
+            Edit Command
+          </Text>
         ) : (
-          <Text color="cyan" bold>Add New Command</Text>
+          <Text color="cyan" bold>
+            Add New Command
+          </Text>
         )}
       </Box>
 
@@ -157,7 +166,9 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
 
       <Box marginTop={1}>
         <Text dimColor>
-          {isSubmitting ? 'Saving...' : '↑/↓ to navigate | Escape to cancel | Enter on last field to submit'}
+          {isSubmitting
+            ? 'Saving...'
+            : '↑/↓ to navigate | Escape to cancel | Enter on last field to submit'}
         </Text>
       </Box>
     </Box>

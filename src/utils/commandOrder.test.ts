@@ -20,27 +20,13 @@ describe('orderCommands', () => {
       ]),
     );
 
-    expect(ordered.map(command => command.name)).toEqual([
-      'Zulu',
-      'Mike',
-      'Alpha',
-      'Bravo',
-    ]);
+    expect(ordered.map((command) => command.name)).toEqual(['Zulu', 'Mike', 'Alpha', 'Bravo']);
   });
 
   it('sorts commands without timestamps alphabetically at the bottom', () => {
-    const ordered = orderCommands(
-      commands,
-      [],
-      new Map([[4, 100]]),
-    );
+    const ordered = orderCommands(commands, [], new Map([[4, 100]]));
 
-    expect(ordered.map(command => command.name)).toEqual([
-      'Bravo',
-      'Alpha',
-      'Mike',
-      'Zulu',
-    ]);
+    expect(ordered.map((command) => command.name)).toEqual(['Bravo', 'Alpha', 'Mike', 'Zulu']);
   });
 
   it('does not mutate the input array', () => {

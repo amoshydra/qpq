@@ -80,7 +80,11 @@ describe('fillTemplate', () => {
   });
 
   it('should handle placeholders with sort index in template', () => {
-    const result = fillTemplate('adb pair {ip:3}{port:2}; adb connect {host:1}', { ip: '192.168.1.1', port: '5555', host: 'localhost' });
+    const result = fillTemplate('adb pair {ip:3}{port:2}; adb connect {host:1}', {
+      ip: '192.168.1.1',
+      port: '5555',
+      host: 'localhost',
+    });
     expect(result).toBe('adb pair 192.168.1.15555; adb connect localhost');
   });
 

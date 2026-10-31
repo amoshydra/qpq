@@ -8,7 +8,12 @@ interface EditCommandFormProps {
   onCancel: () => void;
 }
 
-export function EditCommandForm({ command, existingCommands, onSubmit, onCancel }: EditCommandFormProps) {
+export function EditCommandForm({
+  command,
+  existingCommands,
+  onSubmit,
+  onCancel,
+}: EditCommandFormProps) {
   return (
     <CommandForm
       initialValues={command}

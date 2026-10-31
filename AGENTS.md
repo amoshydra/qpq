@@ -15,6 +15,9 @@ pnpm install          # Install dependencies
 pnpm run dev          # Dev mode (auto-reload with tsx)
 pnpm run build        # Build for production
 pnpm run type-check   # TypeScript check
+pnpm run lint         # ESLint (zero warnings)
+pnpm run format       # Format source with Prettier
+pnpm run format:check # Verify formatting
 pnpm run test         # Run tests in watch mode
 pnpm run test:run     # Run tests once
 pnpm start            # Run built app
@@ -23,7 +26,7 @@ pnpm start            # Run built app
 `pnpm run dev` and `pnpm start` render the TUI only. Selected commands are printed but not executed; use `./qpq.sh` after a build to test the shell integration.
 
 **Hooks:**
-The husky pre-commit hook runs `type-check` and `test:run`. The pre-push hook runs `type-check`, `test:run`, and `build`.
+The husky pre-commit hook runs `type-check`, `lint`, `format:check`, and `test:run`. The pre-push hook adds `build`.
 
 **Build Output:**
 - Built files are output to `dist/` directory
@@ -100,6 +103,8 @@ export function CommandItem({ command, isSelected, index, isFavorite = false }: 
 - **2 spaces** for indentation
 - Maximum line length: ~100 characters
 - Opening brace on the same line for functions/objects
+- Prettier is the source of truth for formatting; run `pnpm run format` before committing
+- ESLint must pass with zero warnings (`pnpm run lint`)
 
 ```typescript
 function foo() {
@@ -269,6 +274,7 @@ History for the Add Command screen is read from the detected shell's history fil
 - Key routing lives in `src/utils/inputActions.ts`; `getMenuAction`, `getSearchAction`, etc. are pure and should be tested there rather than only through components.
 - Targeted component tests use the fake stdin/stdout harness in `src/test/ink.ts`. Assert visible text fragments and callback calls, not full ANSI snapshots.
 - Use `pnpm run test:run` in hooks and CI; `pnpm run test` is watch mode.
+- Run `pnpm run lint` and `pnpm run format:check` with the tests; CI enforces both.
 - Keep a few PTY smoke tests for things the component harness cannot cover: fullscreen behavior, scrolling, and real command execution through `qpq.sh`.
 
 ---

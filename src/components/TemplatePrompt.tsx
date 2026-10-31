@@ -15,11 +15,7 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
   const [values, setValues] = useState<string[]>(new Array(placeholders.length).fill(''));
 
   useInput((input, key) => {
-    const action = getFormNavigationAction(
-      input,
-      key,
-      currentIndex === placeholders.length - 1,
-    );
+    const action = getFormNavigationAction(input, key, currentIndex === placeholders.length - 1);
 
     if (action === 'cancel') {
       onCancel();
@@ -27,12 +23,12 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
     }
 
     if (action === 'previous') {
-      setCurrentIndex(prev => (prev > 0 ? prev - 1 : placeholders.length - 1));
+      setCurrentIndex((prev) => (prev > 0 ? prev - 1 : placeholders.length - 1));
       return;
     }
 
     if (action === 'next') {
-      setCurrentIndex(prev => (prev < placeholders.length - 1 ? prev + 1 : 0));
+      setCurrentIndex((prev) => (prev < placeholders.length - 1 ? prev + 1 : 0));
       return;
     }
 
@@ -46,7 +42,7 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
   });
 
   function handleChange(value: string) {
-    setValues(prev => {
+    setValues((prev) => {
       const newValues = [...prev];
       newValues[currentIndex] = value;
       return newValues;
@@ -56,17 +52,15 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="cyan" bold>Template Variables</Text>
+        <Text color="cyan" bold>
+          Template Variables
+        </Text>
       </Box>
 
       {placeholders.map((placeholder, index) => (
         <Box key={placeholder.name}>
           <Text color={index === currentIndex ? 'green' : 'gray'}>{placeholder.name}: </Text>
-          <TextInput
-            value={values[index]}
-            onChange={handleChange}
-            focus={index === currentIndex}
-          />
+          <TextInput value={values[index]} onChange={handleChange} focus={index === currentIndex} />
         </Box>
       ))}
 

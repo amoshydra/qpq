@@ -9,11 +9,7 @@ describe('parseHistoryFile', () => {
       ': 1700000002:0;echo one; echo two',
     ].join('\n');
 
-    expect(parseHistoryFile(content, 'zsh')).toEqual([
-      'ls',
-      'git status',
-      'echo one; echo two',
-    ]);
+    expect(parseHistoryFile(content, 'zsh')).toEqual(['ls', 'git status', 'echo one; echo two']);
   });
 
   it('parses bash history and ignores timestamp lines', () => {

@@ -11,7 +11,7 @@ export function extractPlaceholders(template: string): PlaceholderInfo[] {
   while ((match = PLACEHOLDER_REGEX.exec(template)) !== null) {
     const name = match[1];
     const sortIndex = match[2] ? parseInt(match[2], 10) : 0;
-    const existing = placeholders.find(p => p.name === name);
+    const existing = placeholders.find((p) => p.name === name);
     if (!existing) {
       placeholders.push({ name, sortIndex });
     }
@@ -28,5 +28,7 @@ export function extractPlaceholders(template: string): PlaceholderInfo[] {
 }
 
 export function fillTemplate(template: string, values: Record<string, string>): string {
-  return template.replace(/\{(\w+)(?::\d+)?\}/g, (_, key) => values[key] === undefined ? `{${key}}` : values[key]);
+  return template.replace(/\{(\w+)(?::\d+)?\}/g, (_, key) =>
+    values[key] === undefined ? `{${key}}` : values[key],
+  );
 }

@@ -112,15 +112,13 @@ export function CommandMenu({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="cyan" bold>My Commands</Text>
+        <Text color="cyan" bold>
+          My Commands
+        </Text>
       </Box>
 
       {allCommands.length > 0 ? (
-        <CommandList
-          commands={allCommands}
-          selectedIndex={selectedIndex}
-          favorites={favorites}
-        />
+        <CommandList commands={allCommands} selectedIndex={selectedIndex} favorites={favorites} />
       ) : (
         <Box>
           <Text dimColor>No commands yet. Press a to add one.</Text>
@@ -129,7 +127,8 @@ export function CommandMenu({
 
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: Navigate | Enter/1-9: Select | f: Favorite | a: Add | d: Delete | e: Edit | c: Clone | /: Search | Ctrl+C: Quit
+          ↑↓: Navigate | Enter/1-9: Select | f: Favorite | a: Add | d: Delete | e: Edit | c: Clone |
+          /: Search | Ctrl+C: Quit
         </Text>
       </Box>
     </Box>

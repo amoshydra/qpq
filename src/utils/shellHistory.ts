@@ -53,8 +53,8 @@ export function parseHistoryFile(content: string, shell: SupportedShell): string
   if (shell === 'zsh') {
     return content
       .split('\n')
-      .filter(line => line.startsWith(': '))
-      .map(line => {
+      .filter((line) => line.startsWith(': '))
+      .map((line) => {
         const match = line.match(/^: \d+:\d+;(.*)$/);
         return match ? match[1] : null;
       })
@@ -64,14 +64,12 @@ export function parseHistoryFile(content: string, shell: SupportedShell): string
   if (shell === 'fish') {
     return content
       .split('\n')
-      .filter(line => line.startsWith('- cmd:'))
-      .map(line => line.slice('- cmd:'.length).trim())
+      .filter((line) => line.startsWith('- cmd:'))
+      .map((line) => line.slice('- cmd:'.length).trim())
       .filter(Boolean);
   }
 
-  return content
-    .split('\n')
-    .filter(line => line.length > 0 && !/^#\d+$/.test(line));
+  return content.split('\n').filter((line) => line.length > 0 && !/^#\d+$/.test(line));
 }
 
 function getHistoryFilePath(shell: SupportedShell): string | null {
@@ -87,7 +85,14 @@ function getHistoryFilePath(shell: SupportedShell): string | null {
     case 'powershell': {
       const appData = process.env.APPDATA;
       return appData
-        ? path.join(appData, 'Microsoft', 'Windows', 'PowerShell', 'PSReadLine', 'ConsoleHost_history.txt')
+        ? path.join(
+            appData,
+            'Microsoft',
+            'Windows',
+            'PowerShell',
+            'PSReadLine',
+            'ConsoleHost_history.txt',
+          )
         : null;
     }
   }
@@ -128,7 +133,7 @@ function parseSubprocessOutput(output: string, shell: SupportedShell): string[] 
   const lines = output.trim().split('\n').filter(Boolean);
 
   if (shell === 'zsh' || shell === 'bash') {
-    return lines.map(line => line.replace(/^[ \t]*\d+[ \t]+/, ''));
+    return lines.map((line) => line.replace(/^[ \t]*\d+[ \t]+/, ''));
   }
 
   return lines;

@@ -24,9 +24,15 @@ export function CommandSearch({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { exit } = useApp();
 
-  const orderedCommands = recentCommands.length > 0
-    ? [...recentCommands, ...allCommands.filter(command => !recentCommands.some(recent => recent.id === command.id))]
-    : allCommands;
+  const orderedCommands =
+    recentCommands.length > 0
+      ? [
+          ...recentCommands,
+          ...allCommands.filter(
+            (command) => !recentCommands.some((recent) => recent.id === command.id),
+          ),
+        ]
+      : allCommands;
   const filteredCommands = searchCommands(orderedCommands, searchQuery);
   const selectedIndexSafe = Math.min(selectedIndex, Math.max(filteredCommands.length - 1, 0));
 
@@ -53,19 +59,19 @@ export function CommandSearch({
         return;
 
       case 'move':
-        setSelectedIndex(prev => {
+        setSelectedIndex((prev) => {
           const nextIndex = prev + action.delta;
           return Math.min(Math.max(nextIndex, 0), Math.max(filteredCommands.length - 1, 0));
         });
         return;
 
       case 'backspace':
-        setSearchQuery(prev => prev.slice(0, -1));
+        setSearchQuery((prev) => prev.slice(0, -1));
         setSelectedIndex(0);
         return;
 
       case 'append':
-        setSearchQuery(prev => prev + action.value);
+        setSearchQuery((prev) => prev + action.value);
         setSelectedIndex(0);
         return;
     }
@@ -74,13 +80,19 @@ export function CommandSearch({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="cyan" bold>Search Commands</Text>
+        <Text color="cyan" bold>
+          Search Commands
+        </Text>
       </Box>
       <Box marginBottom={1}>
         <Text color="green">{`>`}</Text>
         <Text> </Text>
-        <Text inverse color="bgMagenta">{searchQuery}</Text>
-        <Text inverse color="bgMagenta"> </Text>
+        <Text inverse color="bgMagenta">
+          {searchQuery}
+        </Text>
+        <Text inverse color="bgMagenta">
+          {' '}
+        </Text>
       </Box>
       {filteredCommands.length > 0 ? (
         <CommandList
@@ -94,9 +106,7 @@ export function CommandSearch({
         </Box>
       )}
       <Box marginTop={1}>
-        <Text dimColor>
-          ↑↓: Navigate | Enter: Select | Escape: Menu | Ctrl+C: Quit
-        </Text>
+        <Text dimColor>↑↓: Navigate | Enter: Select | Escape: Menu | Ctrl+C: Quit</Text>
       </Box>
     </Box>
   );
