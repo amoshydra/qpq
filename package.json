@@ -1,66 +1,43 @@
 {
   "name": "qpq",
   "version": "0.2.8",
-  "description": "A TUI launcher for frequently used commands",
+  "description": "A native TUI launcher for frequently used commands",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amoshydra/qpq.git"
   },
   "homepage": "https://github.com/amoshydra/qpq",
   "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
   "bin": {
     "qpq": "./qpq.sh"
   },
   "scripts": {
-    "build": "node build.mjs",
-    "dev": "tsx src/index.tsx",
-    "start": "node dist/index.js",
-    "type-check": "tsc --noEmit",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:ui": "vitest --ui",
+    "test": "node --test",
     "prepare": "husky",
     "postinstall": "node scripts/postinstall.mjs",
-    "prepack": "pnpm run build",
     "lint:package": "publint"
   },
   "keywords": [
     "qpq",
     "launcher",
-    "cli"
+    "cli",
+    "tui"
   ],
   "author": "",
   "files": [
-    "dist",
     "qpq.sh",
     "scripts/postinstall.mjs"
   ],
   "license": "MIT",
+  "os": [
+    "linux",
+    "darwin"
+  ],
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
-    "ink": "^6.6.0",
-    "ink-scroll-list": "^0.4.1",
-    "ink-text-input": "^6.0.0",
-    "react": "^19.2.4"
-  },
   "devDependencies": {
-    "@types/node": "^22.14.1",
-    "@types/react": "^19.1.1",
-    "@vitest/ui": "^4.0.18",
-    "esbuild": "^0.27.3",
     "husky": "^9.1.7",
-    "publint": "^0.3.25",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.2",
-    "vitest": "^4.0.18"
+    "publint": "^0.3.25"
   }
 }

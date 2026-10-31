@@ -12,12 +12,13 @@ if (fs.existsSync(path.join(rootDirectory, '.git'))) {
 }
 
 if (process.env.QPQ_SKIP_NATIVE_DOWNLOAD === '1') {
+  console.warn('qpq: native download skipped; qpq will not run until a native binary is installed');
   process.exit(0);
 }
 
 if (process.platform === 'win32') {
-  // The npm bin is the POSIX wrapper; Windows users should use the .exe release asset.
-  process.exit(0);
+  console.error('qpq: npm installation is not supported on Windows; download qpq-windows-amd64.exe from GitHub Releases');
+  process.exit(1);
 }
 
 const assets = {
@@ -30,8 +31,9 @@ const assets = {
 
 const asset = assets[`${process.platform}-${process.arch}`];
 if (!asset) {
-  console.warn(`qpq: no native binary available for ${process.platform}/${process.arch}`);
-  process.exit(0);
+  console.error(`qpq: no native binary available for ${process.platform}/${process.arch}`);
+  console.error('qpq: download a release binary from https://github.com/amoshydra/qpq/releases');
+  process.exit(1);
 }
 
 const version = packageJson.version;
@@ -83,5 +85,7 @@ async function downloadNativeBinary() {
 try {
   await downloadNativeBinary();
 } catch (error) {
-  console.warn(`qpq: could not install the native binary; using the Node fallback: ${error.message}`);
+  console.error(`qpq: could not install the native binary: ${error.message}`);
+  console.error('qpq: download a release binary from https://github.com/amoshydra/qpq/releases');
+  process.exit(1);
 }

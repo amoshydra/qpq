@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,15 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
+  package:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,27 +36,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm run test:run
-
-      - name: Type check
-        run: pnpm run type-check
-
-      - name: Build
-        run: pnpm run build
+      - name: Test installer and launcher
+        run: pnpm test
 
       - name: Validate package
-        if: runner.os == 'Linux'
         run: pnpm run lint:package
-
-      - name: Smoke-test POSIX wrapper
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          ./qpq.sh --version
-          temp_dir="$(mktemp -d)"
-          ln -s "$GITHUB_WORKSPACE/qpq.sh" "$temp_dir/qpq"
-          "$temp_dir/qpq" --version
 
   go:
     runs-on: ubuntu-latest
@@ -90,4 +68,3 @@ jobs:
 
       - name: Build all target binaries
         run: make cross
-

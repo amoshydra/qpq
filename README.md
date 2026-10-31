@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/amoshydra/qpq.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/stars/amoshydra/qpq.svg)](https://github.com/amoshydra/qpq)
 
-A terminal-based command launcher for frequently used commands. The default runtime is native Go + Bubble Tea; a TypeScript/Ink implementation remains as a fallback.
+A terminal-based command launcher for frequently used commands, built with Go and Bubble Tea.
 
 <center>
 
@@ -22,7 +22,6 @@ A terminal-based command launcher for frequently used commands. The default runt
 - **Template Support**: Command placeholders that prompt for values
 - **Cross-platform Config**: Uses the right config directory on Linux, macOS, and Windows
 - **Native Runtime**: Ships a static Go binary for Linux, macOS, Termux, and Raspberry Pi
-- **Node Fallback**: Falls back to the TypeScript/Ink implementation when a native binary is unavailable
 - **Auto-init**: Creates config directory and sample file if missing
 
 | **Menu Mode** | **Add from shell** |
@@ -35,7 +34,7 @@ A terminal-based command launcher for frequently used commands. The default runt
 
 ## Installation
 
-The npm package installs a native Go binary for your platform. Node.js 20+ is used for the npm install step and remains available as a fallback, but `qpq` runs the native binary when it is available.
+The npm package downloads a native Go binary for your platform. Node.js 20+ is required only for the npm install step; `qpq` itself runs a native binary.
 
 ### Try instantly (no install)
 ```bash
@@ -239,45 +238,40 @@ qpq does not sandbox commands. It evaluates the selected command in your shell, 
 
 ## Development
 
-### Native implementation (primary)
+### Native implementation
 
 ```bash
 cd go
-make check       # go test + go vet
+make check       # go test + go vet + formatting check
 make build       # build ./qpq
 make cross       # build all release targets
 ```
 
-See [`go/README.md`](go/README.md) for Termux/Linux install instructions and the full feature list.
-
-### Node fallback
+Source installs:
 
 ```bash
-pnpm install         # Install dependencies
-pnpm run dev         # Run with tsx (auto-reload)
-pnpm run build       # Compile to dist/
-pnpm run type-check  # TypeScript checks
-pnpm run test        # Run tests in watch mode
-pnpm run test:run    # Run tests once
-pnpm start           # Run the built app
+cd go
+make install                 # ~/.local/bin/qpq
+make install PREFIX=/usr/local
 ```
 
-`pnpm run dev` and `pnpm start` render the Node TUI but do not execute selected commands. Use `./qpq.sh` with a native binary present or after building the wrapper to test the full flow.
+### Installer tooling
 
-### From source (Node development)
+The npm package only contains `qpq.sh` and the postinstall downloader. To test those:
+
 ```bash
-git clone git@github.com:amoshydra/qpq.git
-cd qpq
 pnpm install
-pnpm run build
-./qpq.sh
+pnpm test                    # node:test installer and launcher tests
+pnpm run lint:package        # publint
 ```
+
+The npm postinstall downloads the matching native binary from the GitHub release and verifies `SHA256SUMS`. If the download fails, installation fails because there is no Node fallback. In that case, install a release binary manually.
 
 ## FAQ
 
 ### Why qpq.sh wrapper?
 
-`qpq.sh` is the npm entry point. It prefers the native binary installed by the npm postinstall step (`bin/qpq-native`). If that binary is unavailable, it falls back to the Node implementation, evaluates the selected command after the UI exits, and propagates the command's exit status.
+`qpq.sh` resolves the package's `bin/qpq-native` binary and `exec`s it. It exists because npm needs a stable cross-platform entry point while the actual executable is downloaded during postinstall. If the native binary is missing, `qpq` exits with a clear error instead of falling back to a second implementation.
 
 ### Why don't directory changes persist after running a command?
 
