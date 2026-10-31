@@ -20,11 +20,13 @@ await build({
   target: 'node20',
   outfile: path.join(distDir, 'index.js'),
   format: 'esm',
-  minify: true,
+  minify: false,
   treeShaking: true,
   packages: 'external',
 });
 
-fs.chmodSync(path.join(distDir, 'index.js'), 0o755);
+if (process.platform !== 'win32') {
+  fs.chmodSync(path.join(distDir, 'index.js'), 0o755);
+}
 
 console.log('Build complete!');

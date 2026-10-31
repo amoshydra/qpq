@@ -8,6 +8,18 @@ const DEFAULT_CONFIG_FILENAME = 'config.json';
 const LEGACY_FAV_FILENAME = 'fav.json';
 const LEGACY_FAVORITES_FILENAME = 'favorites.json';
 const LEGACY_RECENT_FILENAME = 'recent.json';
+const MAX_RECENT = 20;
+
+let temporaryFileCounter = 0;
+
+interface RawConfig {
+  commands: RawCommand[];
+  favorites: unknown[];
+  recent: unknown[];
+  nextId: number;
+}
+
+type RawCommand = Omit<Command, 'id'> & { id?: number };
 
 function getConfigPath(customPath?: string): string {
   return customPath || path.join(getConfigDir(), DEFAULT_CONFIG_FILENAME);
@@ -34,75 +46,173 @@ async function ensureConfigDir(): Promise<void> {
   }
 }
 
-function ensureIds(config: Config): Config {
-  let nextId = config.nextId || 1;
-  const commandIdMap = new Map<string, number>();
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.promises.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  for (const cmd of config.commands) {
-    if (cmd.id === undefined) {
-      cmd.id = nextId++;
-    }
-    commandIdMap.set(cmd.name, cmd.id);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
+function isCommandRecord(value: unknown): value is RawCommand {
+  if (!isRecord(value)) {
+    return false;
   }
 
-  config.nextId = nextId;
+  return typeof value.name === 'string'
+    && typeof value.command === 'string'
+    && (value.id === undefined || typeof value.id === 'number')
+    && (value.description === undefined || typeof value.description === 'string')
+    && (value.tags === undefined || isStringArray(value.tags))
+    && (value.aliases === undefined || isStringArray(value.aliases));
+}
 
-  config.favorites = config.favorites
-    .map(fav => {
-      if (typeof fav === 'string') {
-        return commandIdMap.get(fav);
-      }
-      return fav;
-    })
-    .filter((id): id is number => id !== undefined && id !== null);
+function parseConfig(content: string): RawConfig | null {
+  let parsed: unknown;
 
-  config.recent = config.recent
-    .map(rec => {
-      if ('name' in rec && typeof rec.name === 'string') {
-        const id = commandIdMap.get(rec.name);
-        if (id !== undefined) {
-          return { id, timestamp: rec.timestamp };
-        }
-        return null;
-      }
-      return rec;
-    })
-    .filter((rec): rec is RecentCommand => rec !== null);
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return null;
+  }
 
-  return config;
+  if (!isRecord(parsed) || !Array.isArray(parsed.commands) || !parsed.commands.every(isCommandRecord)) {
+    return null;
+  }
+
+  if (parsed.favorites !== undefined && !Array.isArray(parsed.favorites)) {
+    return null;
+  }
+
+  if (parsed.recent !== undefined && !Array.isArray(parsed.recent)) {
+    return null;
+  }
+
+  return {
+    commands: parsed.commands,
+    favorites: Array.isArray(parsed.favorites) ? parsed.favorites : [],
+    recent: Array.isArray(parsed.recent) ? parsed.recent : [],
+    nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 0,
+  };
+}
+
+function normalizeConfig(raw: RawConfig): Config {
+  const commands: Command[] = raw.commands.map(command => ({
+    ...command,
+    id: command.id ?? 0,
+  }));
+  const usedIds = new Set<number>();
+  let nextId = Number.isInteger(raw.nextId) && raw.nextId > 0 ? raw.nextId : 1;
+
+  for (const command of commands) {
+    if (
+      typeof command.id !== 'number'
+      || !Number.isInteger(command.id)
+      || command.id < 1
+      || usedIds.has(command.id)
+    ) {
+      command.id = nextId;
+    }
+
+    usedIds.add(command.id);
+    nextId = Math.max(nextId, command.id + 1);
+  }
+
+  const idByName = new Map(commands.map(command => [command.name, command.id]));
+  const favorites: number[] = [];
+
+  for (const favorite of raw.favorites) {
+    const id = typeof favorite === 'string' ? idByName.get(favorite) : favorite;
+
+    if (typeof id === 'number' && usedIds.has(id) && !favorites.includes(id)) {
+      favorites.push(id);
+    }
+  }
+
+  const recent: RecentCommand[] = [];
+  const recentIds = new Set<number>();
+
+  for (const entry of raw.recent) {
+    if (!isRecord(entry)) {
+      continue;
+    }
+
+    const id = typeof entry.name === 'string' ? idByName.get(entry.name) : entry.id;
+
+    if (
+      typeof id === 'number'
+      && usedIds.has(id)
+      && !recentIds.has(id)
+    ) {
+      const timestamp = typeof entry.timestamp === 'number' && Number.isFinite(entry.timestamp)
+        ? entry.timestamp
+        : 0;
+
+      recent.push({ id, timestamp });
+      recentIds.add(id);
+    }
+  }
+
+  return {
+    commands,
+    favorites,
+    recent,
+    nextId,
+  };
+}
+
+async function writeConfigFile(configPath: string, config: Config): Promise<void> {
+  const content = JSON.stringify(config, null, 2);
+  temporaryFileCounter += 1;
+  const temporaryPath = `${configPath}.${process.pid}.${temporaryFileCounter}.tmp`;
+
+  try {
+    await fs.promises.writeFile(temporaryPath, content, 'utf-8');
+    await fs.promises.rename(temporaryPath, configPath);
+  } catch (error) {
+    await fs.promises.rm(temporaryPath, { force: true }).catch(() => {});
+    throw new Error(
+      `Failed to write config file at ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 async function initConfigFile(configPath: string): Promise<void> {
   const sampleModule = await import('./sample-commands.js');
-  const sampleConfig: { commands: Array<Omit<Command, 'id'>>; historyBufferSize?: number } = sampleModule.default;
+  const sampleConfig: { commands: Array<Omit<Command, 'id'>> } = sampleModule.default;
 
-  let nextId = 1;
-  const commands = sampleConfig.commands.map((cmd) => ({
-    ...cmd,
-    id: nextId++
+  const commands = sampleConfig.commands.map((command, index) => ({
+    ...command,
+    id: index + 1,
   }));
 
   const newConfig: Config = {
     commands,
     favorites: [],
     recent: [],
-    nextId,
-    historyBufferSize: sampleConfig.historyBufferSize
+    nextId: commands.length + 1,
   };
 
-  await fs.promises.writeFile(configPath, JSON.stringify(newConfig, null, 2));
+  await writeConfigFile(configPath, newConfig);
 }
 
-function loadConfigSafely(content: string, filePath: string): Config | null {
-  try {
-    const config = JSON.parse(content);
-    if (config && typeof config === 'object' && 'commands' in config) {
-      return config as Config;
-    }
-    return null;
-  } catch {
-    return null;
+function formatConfigError(error: Error, filePath: string): string {
+  const errorCode = (error as { code?: string }).code;
+
+  if (errorCode === 'ENOENT') {
+    return `Config file not found at ${filePath}`;
   }
+
+  return `Error loading config file at ${filePath}: ${error.message}`;
 }
 
 async function migrateFromLegacyFiles(configPath: string): Promise<Config | null> {
@@ -110,108 +220,63 @@ async function migrateFromLegacyFiles(configPath: string): Promise<Config | null
   const legacyFavoritesPath = getLegacyFavoritesPath();
   const legacyRecentPath = getLegacyRecentPath();
 
-  let needsMigration = false;
-
-  try {
-    await fs.promises.access(legacyFavPath);
-    needsMigration = true;
-  } catch {
-    // File doesn't exist
-  }
-
-  if (!needsMigration) {
+  if (!await fileExists(legacyFavPath)) {
     return null;
   }
 
   try {
-    let commands: Config['commands'] = [];
-    try {
-      const favContent = await fs.promises.readFile(legacyFavPath, 'utf-8');
-      const favConfig = loadConfigSafely(favContent, legacyFavPath);
-      if (favConfig) {
-        commands = favConfig.commands;
+    const favContent = await fs.promises.readFile(legacyFavPath, 'utf-8');
+    const favConfig = parseConfig(favContent);
+
+    if (!favConfig) {
+      throw new Error(`Invalid legacy config file at ${legacyFavPath}`);
+    }
+
+    let favorites: unknown[] = [];
+
+    if (await fileExists(legacyFavoritesPath)) {
+      const favoritesContent = await fs.promises.readFile(legacyFavoritesPath, 'utf-8');
+      const favoritesData: unknown = JSON.parse(favoritesContent);
+
+      if (!isRecord(favoritesData) || !Array.isArray(favoritesData.favNames)) {
+        throw new Error(`Invalid legacy favorites file at ${legacyFavoritesPath}`);
       }
-    } catch {
-      // If we can't read fav.json, we'll create a new config
+
+      favorites = favoritesData.favNames;
     }
 
-    let favorites: number[] = [];
-    try {
-      await fs.promises.access(legacyFavoritesPath);
-      const favContent = await fs.promises.readFile(legacyFavoritesPath, 'utf-8');
-      const favData = JSON.parse(favContent);
-      favorites = (favData.favNames || []).map((name: string) => {
-        const cmd = commands.find(c => c.name === name);
-        return cmd?.id || 0;
-      }).filter((id: number) => id !== 0);
-    } catch {
-      // File doesn't exist or is invalid
-    }
+    let recent: unknown[] = [];
 
-    let recent: RecentCommand[] = [];
-    try {
-      await fs.promises.access(legacyRecentPath);
+    if (await fileExists(legacyRecentPath)) {
       const recentContent = await fs.promises.readFile(legacyRecentPath, 'utf-8');
-      const oldRecent = JSON.parse(recentContent);
-      recent = oldRecent.map((rec: { name: string; timestamp: number }) => {
-        const cmd = commands.find(c => c.name === rec.name);
-        return cmd ? { id: cmd.id, timestamp: rec.timestamp } : null;
-      }).filter((r: RecentCommand | null): r is RecentCommand => r !== null);
-    } catch {
-      // File doesn't exist or is invalid
+      const recentData: unknown = JSON.parse(recentContent);
+
+      if (!Array.isArray(recentData)) {
+        throw new Error(`Invalid legacy recent file at ${legacyRecentPath}`);
+      }
+
+      recent = recentData;
     }
 
-    let nextId = 1;
-    const commandIdMap = new Map<string, number>();
-    commands = commands.map(cmd => {
-      if (cmd.id === undefined) {
-        cmd.id = nextId++;
-      }
-      commandIdMap.set(cmd.name, cmd.id);
-      return cmd;
-    });
-
-    favorites = favorites.map(fav => {
-      const cmd = commands.find(c => c.id === fav);
-      return cmd?.id || 0;
-    }).filter((id: number) => id !== 0);
-
-    recent = recent.map(rec => {
-      const cmd = commands.find(c => c.id === rec.id);
-      return cmd ? { id: cmd.id, timestamp: rec.timestamp } : null;
-    }).filter((r: RecentCommand | null): r is RecentCommand => r !== null);
-
-    const unifiedConfig: Config = {
-      commands,
+    const unifiedConfig = normalizeConfig({
+      commands: favConfig.commands,
       favorites,
       recent,
-      nextId,
-      historyBufferSize: undefined
-    };
+      nextId: 1,
+    });
 
-    await fs.promises.writeFile(configPath, JSON.stringify(unifiedConfig, null, 2), 'utf-8');
+    await writeConfigFile(configPath, unifiedConfig);
 
     await Promise.all([
       fs.promises.unlink(legacyFavPath).catch(() => {}),
       fs.promises.unlink(legacyFavoritesPath).catch(() => {}),
-      fs.promises.unlink(legacyRecentPath).catch(() => {})
+      fs.promises.unlink(legacyRecentPath).catch(() => {}),
     ]);
 
-    console.log('Migrated from legacy separate files to unified config');
     return unifiedConfig;
   } catch (error) {
-    console.error(`Failed to migrate from legacy files: ${error}`);
-    return null;
+    throw new Error(`Failed to migrate legacy config files: ${error instanceof Error ? error.message : String(error)}`);
   }
-}
-
-function formatConfigError(error: Error, filePath: string): string {
-  const errorCode = (error as { code?: string }).code;
-  if (errorCode === 'ENOENT') {
-    return `Config file not found at ${filePath}`;
-  }
-
-  return `Error loading config file at ${filePath}: ${error.message}`;
 }
 
 export async function loadConfig(customPath?: string): Promise<Config | null> {
@@ -220,159 +285,99 @@ export async function loadConfig(customPath?: string): Promise<Config | null> {
   try {
     await ensureConfigDir();
 
-    let fileExists = false;
-    try {
-      await fs.promises.access(configPath);
-      fileExists = true;
-    } catch {
-      fileExists = false;
-    }
-
-    if (!fileExists) {
+    if (!await fileExists(configPath)) {
       const migratedConfig = await migrateFromLegacyFiles(configPath);
+
       if (migratedConfig) {
-        return ensureIds(migratedConfig);
+        return migratedConfig;
       }
+
       await initConfigFile(configPath);
     }
 
     const content = await fs.promises.readFile(configPath, 'utf-8');
-    const config = loadConfigSafely(content, configPath);
+    const config = parseConfig(content);
 
     if (config === null) {
       console.error(formatConfigError(new Error('Invalid or corrupted config file'), configPath));
       return null;
     }
 
-    return ensureIds(config);
+    return normalizeConfig(config);
   } catch (error) {
     console.error(formatConfigError(error as Error, configPath));
     return null;
   }
 }
 
+export async function saveConfig(config: Config): Promise<void> {
+  const configPath = getConfigPath();
+  await ensureConfigDir();
+  await writeConfigFile(configPath, normalizeConfig({
+    commands: config.commands,
+    favorites: config.favorites,
+    recent: config.recent,
+    nextId: config.nextId,
+  }));
+}
+
+let mutationQueue: Promise<void> = Promise.resolve();
+
+export async function mutateConfig(mutator: (config: Config) => Config): Promise<Config | null> {
+  const result = mutationQueue.then(async () => {
+    const config = await loadConfig();
+
+    if (!config) {
+      return null;
+    }
+
+    const updatedConfig = mutator(config);
+
+    if (updatedConfig !== config) {
+      await saveConfig(updatedConfig);
+    }
+
+    return updatedConfig;
+  });
+
+  mutationQueue = result.then(() => undefined, () => undefined);
+
+  return result;
+}
+
 export function getDefaultConfigPath(): string {
   return getConfigPath();
 }
 
-export async function saveConfig(config: Config): Promise<void> {
-  const configPath = getConfigPath();
-  await ensureConfigDir();
-  
-  if (!config.nextId) {
-    let maxId = 0;
-    for (const cmd of config.commands) {
-      if (cmd.id > maxId) maxId = cmd.id;
-    }
-    config.nextId = maxId + 1;
-  }
-  
-  const content = JSON.stringify(config, null, 2);
-  await fs.promises.writeFile(configPath, content, 'utf-8');
-}
+export function getRecentWithCommands(config: Config): {
+  commands: Command[];
+  timestamps: RecentCommand[];
+} {
+  const commandsById = new Map(config.commands.map(command => [command.id, command]));
+  const validRecent = config.recent.filter(entry => commandsById.has(entry.id));
+  const commands = validRecent
+    .map(entry => commandsById.get(entry.id))
+    .filter((command): command is Command => command !== undefined);
 
-export async function loadFavorites(): Promise<number[]> {
-  const config = await loadConfig();
-  return config?.favorites || [];
-}
-
-export async function saveFavorites(favIds: number[]): Promise<void> {
-  const config = await loadConfig();
-  if (config) {
-    const validIds = config.commands.map(c => c.id);
-    config.favorites = favIds.filter(id => validIds.includes(id));
-    await saveConfig(config);
-  }
-}
-
-export async function toggleFavorite(commandId: number): Promise<number[]> {
-  const config = await loadConfig();
-  if (!config) return [];
-
-  const validIds = config.commands.map(c => c.id);
-  if (!validIds.includes(commandId)) return [];
-
-  const index = config.favorites.indexOf(commandId);
-
-  if (index >= 0) {
-    config.favorites.splice(index, 1);
-  } else {
-    config.favorites.push(commandId);
-  }
-
-  await saveConfig(config);
-  return config.favorites;
-}
-
-export function isFavorite(commandId: number, favorites: number[]): boolean {
-  return favorites.includes(commandId);
-}
-
-export async function clearFavorites(): Promise<void> {
-  const config = await loadConfig();
-  if (config) {
-    config.favorites = [];
-    await saveConfig(config);
-  }
+  return { commands, timestamps: validRecent };
 }
 
 export async function saveRecent(command: { id: number }): Promise<void> {
-  const config = await loadConfig();
-  if (!config) return;
+  await mutateConfig(config => {
+    if (!config.commands.some(existing => existing.id === command.id)) {
+      return config;
+    }
 
-  const validIds = config.commands.map(c => c.id);
-  if (!validIds.includes(command.id)) return;
+    const recent = config.recent.filter(entry => entry.id !== command.id);
 
-  const MAX_RECENT = 20;
-  const existing = config.recent.findIndex(r => r.id === command.id);
+    recent.unshift({
+      id: command.id,
+      timestamp: Date.now(),
+    });
 
-  if (existing >= 0) {
-    config.recent.splice(existing, 1);
-  }
-
-  config.recent.unshift({
-    id: command.id,
-    timestamp: Date.now()
+    return {
+      ...config,
+      recent: recent.slice(0, MAX_RECENT),
+    };
   });
-
-  config.recent = config.recent.slice(0, MAX_RECENT);
-  await saveConfig(config);
-}
-
-export async function loadRecentWithCommands(allCommands: Command[]): Promise<{
-  commands: Command[];
-  timestamps: RecentCommand[];
-}> {
-  const config = await loadConfig();
-  if (!config) return { commands: [], timestamps: [] };
-
-  const validIds = new Set(config.commands.map(c => c.id));
-  const validRecent = config.recent.filter(r => validIds.has(r.id));
-
-  const recentCommands = validRecent
-    .map(r => allCommands.find(c => c.id === r.id))
-    .filter(Boolean) as Command[];
-  
-  return { commands: recentCommands, timestamps: validRecent };
-}
-
-export async function loadRecent(allCommands: Command[]): Promise<Command[]> {
-  const result = await loadRecentWithCommands(allCommands);
-  return result.commands;
-}
-
-export async function loadRecentWithTimestamps(): Promise<RecentCommand[]> {
-  const config = await loadConfig();
-  if (!config) return [];
-
-  const validIds = new Set(config.commands.map(c => c.id));
-  return config.recent.filter(r => validIds.has(r.id));
-}
-
-export async function clearRecent(): Promise<void> {
-  const config = await loadConfig();
-  if (config) {
-    config.recent = [];
-    await saveConfig(config);
-  }
 }

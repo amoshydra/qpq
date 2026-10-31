@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
-import { CommandItem } from './CommandItem.js';
+import { Box, Text, useApp, useInput } from 'ink';
+import { useState } from 'react';
 import type { Command } from '../types/command.js';
+import { getSelectedIndex, orderCommands } from '../utils/commandOrder.js';
+import { getMenuAction } from '../utils/inputActions.js';
+import { CommandList } from './CommandList.js';
 
 interface CommandMenuProps {
   commands: Command[];
-  recentCommands: Command[];
   commandTimestamps: Map<number, number>;
   favorites: number[];
   onSelect: (command: Command) => void;
@@ -15,94 +16,96 @@ interface CommandMenuProps {
   onDelete: (commandId: number) => void;
   onEdit: (command: Command) => void;
   onDuplicate: (command: Command) => void;
-  children?: React.ReactNode;
 }
 
-
-export function CommandMenu({ commands, recentCommands, commandTimestamps, favorites, onSelect, onSwitchToSearch, onToggleFavorite, onAdd, onDelete, onEdit, onDuplicate, children }: CommandMenuProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+export function CommandMenu({
+  commands,
+  commandTimestamps,
+  favorites,
+  onSelect,
+  onSwitchToSearch,
+  onToggleFavorite,
+  onAdd,
+  onDelete,
+  onEdit,
+  onDuplicate,
+}: CommandMenuProps) {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const { exit } = useApp();
 
-  const favoritesList = commands.filter(cmd => favorites.includes(cmd.id));
+  const allCommands = orderCommands(commands, favorites, commandTimestamps);
+  const selectedIndex = getSelectedIndex(allCommands, selectedId);
+  const selectedCommand = allCommands[selectedIndex];
 
-  const nonFavoriteCommands = commands.filter(cmd => !favorites.includes(cmd.id))
-    .sort((a, b) => {
-      const aTime = commandTimestamps.get(a.id) || 0;
-      const bTime = commandTimestamps.get(b.id) || 0;
+  const moveSelection = (delta: number) => {
+    if (allCommands.length === 0) {
+      return;
+    }
 
-      if (aTime === 0 && bTime === 0) {
-        return a.name.localeCompare(b.name);
-      }
-      if (aTime === 0) return 1;
-      if (bTime === 0) return -1;
-      return bTime - aTime;
-    });
-
-  const allCommands = [...favoritesList, ...nonFavoriteCommands];
+    const nextIndex = Math.min(Math.max(selectedIndex + delta, 0), allCommands.length - 1);
+    setSelectedId(allCommands[nextIndex].id);
+  };
 
   useInput((input, key) => {
-    if (key.escape || key.ctrl && input === 'c') {
-      exit();
+    const action = getMenuAction(input, key);
+
+    if (!action) {
       return;
     }
 
-    if (key.return) {
-      if (allCommands.length > 0) {
-        onSelect(allCommands[selectedIndex]);
-      }
-      return;
-    }
+    switch (action.type) {
+      case 'quit':
+        exit();
+        return;
 
-    if (input === '/') {
-      onSwitchToSearch();
-      return;
-    }
+      case 'switch-to-search':
+        onSwitchToSearch();
+        return;
 
-    if (key.upArrow) {
-      setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
-      return;
-    }
+      case 'add':
+        onAdd();
+        return;
 
-    if (key.downArrow) {
-      setSelectedIndex(prev => (prev < allCommands.length - 1 ? prev + 1 : prev));
-      return;
-    }
+      case 'move':
+        moveSelection(action.delta);
+        return;
 
-    if (/^[1-9]$/.test(input)) {
-      const index = parseInt(input) - 1;
-      if (index >= 0 && index < allCommands.length) {
-        onSelect(allCommands[index]);
-      }
-      return;
-    }
+      case 'select':
+        if (selectedCommand) {
+          onSelect(selectedCommand);
+        }
+        return;
 
-    if (input === 'f' && allCommands.length > 0) {
-      const selectedCommand = allCommands[selectedIndex];
-      onToggleFavorite(selectedCommand.id);
-      return;
-    }
+      case 'select-index':
+        if (action.index < allCommands.length) {
+          onSelect(allCommands[action.index]);
+        }
+        return;
 
-    if (input === 'a') {
-      onAdd();
-      return;
-    }
+      case 'toggle-favorite':
+        if (selectedCommand) {
+          setSelectedId(selectedCommand.id);
+          onToggleFavorite(selectedCommand.id);
+        }
+        return;
 
-    if (input === 'd' && allCommands.length > 0) {
-      const selectedCommand = allCommands[selectedIndex];
-      onDelete(selectedCommand.id);
-      return;
-    }
+      case 'delete':
+        if (selectedCommand) {
+          onDelete(selectedCommand.id);
+        }
+        return;
 
-    if (input === 'e' && allCommands.length > 0) {
-      const selectedCommand = allCommands[selectedIndex];
-      onEdit(selectedCommand);
-      return;
-    }
+      case 'edit':
+        if (selectedCommand) {
+          onEdit(selectedCommand);
+        }
+        return;
 
-    if (input === 'c' && allCommands.length > 0) {
-      const selectedCommand = allCommands[selectedIndex];
-      onDuplicate(selectedCommand);
-      return;
+      case 'duplicate':
+        if (selectedCommand) {
+          onDuplicate(selectedCommand);
+        }
+        return;
     }
   });
 
@@ -112,15 +115,17 @@ export function CommandMenu({ commands, recentCommands, commandTimestamps, favor
         <Text color="cyan" bold>My Commands</Text>
       </Box>
 
-      {allCommands.map((command, index) => (
-        <CommandItem
-          key={command.name}
-          command={command}
-          isSelected={index === selectedIndex}
-          index={index}
-          isFavorite={favorites.includes(command.id)}
+      {allCommands.length > 0 ? (
+        <CommandList
+          commands={allCommands}
+          selectedIndex={selectedIndex}
+          favorites={favorites}
         />
-      ))}
+      ) : (
+        <Box>
+          <Text dimColor>No commands yet. Press a to add one.</Text>
+        </Box>
+      )}
 
       <Box marginTop={1}>
         <Text dimColor>

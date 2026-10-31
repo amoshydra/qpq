@@ -1,23 +1,23 @@
-import { ReactNode, useEffect } from 'react';
+const ENTER_ALT_SCREEN = '\x1b[?1049h';
+const MOVE_HOME = '\x1b[H';
+const LEAVE_ALT_SCREEN = '\x1b[?1049l';
 
-const enterAltScreenCommand = '\x1b[?1049h';
-const moveToHome = '\x1b[H';
-const leaveAltScreenCommand = '\x1b[?1049l';
+let fullscreenActive = false;
 
-const exitFullScreen = () => {
-  process.stdout.write(leaveAltScreenCommand);
-};
+export function enterFullscreen(): void {
+  if (fullscreenActive || !process.stdout.isTTY) {
+    return;
+  }
 
-const FullScreen = ({ children }: { children: ReactNode }) => {
-  useEffect(() => {
-    // destroy alternate screen on unmount
-    return exitFullScreen;
-  }, []);
-  // trigger alternate screen
-  process.stdout.write(enterAltScreenCommand);
-  process.stdout.write(moveToHome);
-  return children;
-};
+  fullscreenActive = true;
+  process.stdout.write(`${ENTER_ALT_SCREEN}${MOVE_HOME}`);
+}
 
-export { exitFullScreen };
-export default FullScreen;
+export function exitFullscreen(): void {
+  if (!fullscreenActive) {
+    return;
+  }
+
+  fullscreenActive = false;
+  process.stdout.write(LEAVE_ALT_SCREEN);
+}

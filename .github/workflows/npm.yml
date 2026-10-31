@@ -57,7 +57,7 @@ jobs:
 
       - name: Run tests
         if: ${{ steps.release.outputs.release_created == 'true' }}
-        run: pnpm exec vitest run
+        run: pnpm run test:run
 
       - name: Type check
         if: ${{ steps.release.outputs.release_created == 'true' }}

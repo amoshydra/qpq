@@ -4,7 +4,6 @@ type SampleCommand = Omit<Command, 'id'>;
 
 interface SampleConfig {
   commands: SampleCommand[];
-  historyBufferSize?: number;
 }
 
 const sampleConfig: SampleConfig = {

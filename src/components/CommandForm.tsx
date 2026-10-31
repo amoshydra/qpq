@@ -1,36 +1,42 @@
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Command } from '../types/command.js';
+import { buildCommandFromForm } from '../utils/commandForm.js';
+import { getFormNavigationAction } from '../utils/inputActions.js';
+
+type FormField = 'name' | 'command' | 'description' | 'tags';
 
 interface CommandFormProps {
   initialValues?: Partial<Command>;
   existingCommands: Command[];
   onSubmit: (command: Command) => void;
   onCancel: () => void;
-  existingCommandName?: string;
 }
 
-export function CommandForm({ initialValues, existingCommands, onSubmit, onCancel, existingCommandName }: CommandFormProps) {
-  const [formField, setFormField] = useState<'name' | 'command' | 'description' | 'tags'>(('name') as 'name');
+export function CommandForm({ initialValues, existingCommands, onSubmit, onCancel }: CommandFormProps) {
+  const [formField, setFormField] = useState<FormField>('name');
   const [name, setName] = useState(initialValues?.name || '');
-  const [cmd, setCommand] = useState(initialValues?.command || '');
+  const [command, setCommand] = useState(initialValues?.command || '');
   const [description, setDescription] = useState(initialValues?.description || '');
   const [tags, setTags] = useState(initialValues?.tags ? initialValues.tags.join(', ') : '');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = useRef(false);
 
-  useInput((_, key) => {
-    if (key.escape) {
+  const isEditing = initialValues?.id !== undefined;
+
+  useInput((input, key) => {
+    const action = getFormNavigationAction(input, key, formField === 'tags');
+
+    if (action === 'cancel') {
       onCancel();
-    } else if (key.upArrow) {
+    } else if (action === 'previous') {
       prevField();
-    } else if (key.downArrow) {
+    } else if (action === 'next') {
       nextField();
-    } else if (key.return) {
-      if (formField === 'tags') {
-        handleSubmit();
-      } else {
-        nextField();
-      }
+    } else if (action === 'submit') {
+      handleSubmit();
     }
   });
 
@@ -55,34 +61,40 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
   }
 
   function handleSubmit() {
-    const trimmedTags = tags.trim();
-    const parsedTags = trimmedTags === '' ? [] : trimmedTags.split(',').map(tag => tag.trim()).filter(Boolean);
-
-    const finalName = name.trim();
-    const finalCmd = cmd.trim();
-
-    if (!finalCmd) {
+    if (submitting.current) {
       return;
     }
 
-    const exists = existingCommands.some(c => c.name === finalName && c.name !== existingCommandName);
-    if (exists) {
+    const result = buildCommandFromForm(
+      { name, command, description, tags },
+      existingCommands,
+      initialValues?.id,
+    );
+
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
+
+    submitting.current = true;
+    setIsSubmitting(true);
 
     onSubmit({
-      id: initialValues?.id || 0,
-      name: finalName || finalCmd,
-      command: finalCmd,
-      description: description.trim() || undefined,
-      tags: parsedTags.length > 0 ? parsedTags : undefined
+      ...result.command,
+      id: initialValues?.id ?? 0,
     });
+  }
+
+  function clearError() {
+    if (error) {
+      setError(null);
+    }
   }
 
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        {existingCommandName ? (
+        {isEditing ? (
           <Text color="yellow" bold>Edit Command</Text>
         ) : (
           <Text color="cyan" bold>Add New Command</Text>
@@ -93,7 +105,10 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
         <Text color={formField === 'name' ? 'green' : 'gray'}>Name: </Text>
         <TextInput
           value={name}
-          onChange={setName}
+          onChange={(value) => {
+            setName(value);
+            clearError();
+          }}
           focus={formField === 'name'}
         />
       </Box>
@@ -101,8 +116,11 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
       <Box>
         <Text color={formField === 'command' ? 'green' : 'gray'}>Command: </Text>
         <TextInput
-          value={cmd}
-          onChange={setCommand}
+          value={command}
+          onChange={(value) => {
+            setCommand(value);
+            clearError();
+          }}
           focus={formField === 'command'}
         />
       </Box>
@@ -111,7 +129,10 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
         <Text color={formField === 'description' ? 'green' : 'gray'}>Description: </Text>
         <TextInput
           value={description}
-          onChange={setDescription}
+          onChange={(value) => {
+            setDescription(value);
+            clearError();
+          }}
           focus={formField === 'description'}
         />
       </Box>
@@ -120,13 +141,24 @@ export function CommandForm({ initialValues, existingCommands, onSubmit, onCance
         <Text color={formField === 'tags' ? 'green' : 'gray'}>Tags: </Text>
         <TextInput
           value={tags}
-          onChange={setTags}
+          onChange={(value) => {
+            setTags(value);
+            clearError();
+          }}
           focus={formField === 'tags'}
         />
       </Box>
 
+      {error && (
+        <Box marginTop={1}>
+          <Text color="red">{error}</Text>
+        </Box>
+      )}
+
       <Box marginTop={1}>
-        <Text dimColor>↑/↓ to navigate | Escape to cancel | Enter on last field to submit</Text>
+        <Text dimColor>
+          {isSubmitting ? 'Saving...' : '↑/↓ to navigate | Escape to cancel | Enter on last field to submit'}
+        </Text>
       </Box>
     </Box>
   );

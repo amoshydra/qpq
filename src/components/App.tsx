@@ -1,21 +1,36 @@
 import { Box, Text, useApp } from 'ink';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Command } from '../types/command.js';
-import { clearRecent, isFavorite as isFavoriteUtil, loadConfig, loadFavorites, loadRecentWithCommands, saveConfig, saveFavorites, saveRecent, toggleFavorite as toggleFavoriteUtil } from '../utils/config.js';
+import type { Config } from '../types/config.js';
+import { emitCommand } from '../utils/commandOutput.js';
+import {
+  getDefaultConfigPath,
+  getRecentWithCommands,
+  loadConfig,
+  mutateConfig,
+  saveRecent,
+} from '../utils/config.js';
+import {
+  addCommand,
+  duplicateCommand,
+  removeCommand,
+  toggleFavorite as toggleFavoriteInConfig,
+  updateCommand,
+} from '../utils/configMutations.js';
 import { extractPlaceholders, fillTemplate } from '../utils/templates.js';
 import { CommandMenu } from './CommandMenu.js';
 
-const AddCommandForm = lazy(() => import('./AddCommandForm.js').then(m => ({ default: m.AddCommandForm })));
-const CommandSearch = lazy(() => import('./CommandSearch.js').then(m => ({ default: m.CommandSearch })));
-const DeleteConfirmation = lazy(() => import('./DeleteConfirmation.js').then(m => ({ default: m.DeleteConfirmation })));
-const EditCommandForm = lazy(() => import('./EditCommandForm.js').then(m => ({ default: m.EditCommandForm })));
-const TemplatePrompt = lazy(() => import('./TemplatePrompt.js').then(m => ({ default: m.TemplatePrompt })));
+const AddCommandForm = lazy(() => import('./AddCommandForm.js').then(module => ({ default: module.AddCommandForm })));
+const CommandSearch = lazy(() => import('./CommandSearch.js').then(module => ({ default: module.CommandSearch })));
+const DeleteConfirmation = lazy(() => import('./DeleteConfirmation.js').then(module => ({ default: module.DeleteConfirmation })));
+const EditCommandForm = lazy(() => import('./EditCommandForm.js').then(module => ({ default: module.EditCommandForm })));
+const TemplatePrompt = lazy(() => import('./TemplatePrompt.js').then(module => ({ default: module.TemplatePrompt })));
 
 type AppMode = 'menu' | 'search' | 'template' | 'add' | 'edit_command';
 
 interface AppState {
   mode: AppMode;
-  commands: Command[] | null;
+  commands: Command[];
   recentCommands: Command[];
   commandTimestamps: Map<number, number>;
   favorites: number[];
@@ -23,6 +38,22 @@ interface AppState {
   editingCommand: Command | null;
   showDeleteConfirm: boolean;
   deleteCommand: Command | null;
+}
+
+function actionError(action: string, error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return `Failed to ${action}: ${message}`;
+}
+
+async function persistMutation(mutator: (config: Config) => Config): Promise<Config> {
+  const updatedConfig = await mutateConfig(mutator);
+
+  if (!updatedConfig) {
+    throw new Error('the config file could not be loaded');
+  }
+
+  return updatedConfig;
 }
 
 export function App() {
@@ -40,32 +71,20 @@ export function App() {
   }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const refreshConfig = async () => {
-    const config = await loadConfig();
-    if (config) {
-      const [recentData, favs] = await Promise.all([
-        loadRecentWithCommands(config.commands),
-        loadFavorites()
-      ]);
-      const timestampMap = new Map<number, number>(recentData.timestamps.map(t => [t.id, t.timestamp]));
-      setState(prev => ({
-        ...prev,
-        commands: config.commands,
-        recentCommands: recentData.commands,
-        commandTimestamps: timestampMap,
-        favorites: favs,
-      }));
-    }
-  };
+  const commandSelected = useRef(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function init() {
       try {
         const config = await loadConfig();
 
+        if (cancelled) {
+          return;
+        }
+
         if (config === null) {
-          const { getDefaultConfigPath } = await import('../utils/config.js');
           const configPath = getDefaultConfigPath();
           setError(`Failed to load config file. The file at "${configPath}" appears to be corrupted or invalid.
 
@@ -76,32 +95,33 @@ You can fix this by:
           return;
         }
 
-        const [recentData, favs] = await Promise.all([
-          loadRecentWithCommands(config.commands),
-          loadFavorites()
-        ]);
-
-        const timestampMap = new Map<number, number>(recentData.timestamps.map(t => [t.id, t.timestamp]));
+        const recentData = getRecentWithCommands(config);
 
         setState({
           mode: 'menu',
           commands: config.commands,
           recentCommands: recentData.commands,
-          commandTimestamps: timestampMap,
-          favorites: favs,
+          commandTimestamps: new Map(recentData.timestamps.map(entry => [entry.id, entry.timestamp])),
+          favorites: config.favorites,
           selectedCommand: null,
           editingCommand: null,
           showDeleteConfirm: false,
           deleteCommand: null,
         });
         setLoading(false);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load config');
-        setLoading(false);
+      } catch (initError) {
+        if (!cancelled) {
+          setError(initError instanceof Error ? initError.message : 'Failed to load config');
+          setLoading(false);
+        }
       }
     }
 
-    init();
+    void init();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSelectCommand = async (command: Command) => {
@@ -116,21 +136,45 @@ You can fix this by:
       return;
     }
 
-    await saveRecent(command);
-    process.stderr.write(`__QEXEC__ ${command.command}\n`);
-    exit();
-  };
-
-  const handleTemplateSubmit = async (values: Record<string, string>) => {
-    if (!state.selectedCommand) {
-      exit();
+    if (commandSelected.current) {
       return;
     }
 
-    await saveRecent(state.selectedCommand);
-    const filledCommand = fillTemplate(state.selectedCommand.command, values);
-    process.stderr.write(`__QEXEC__ ${filledCommand}\n`);
-    exit();
+    commandSelected.current = true;
+
+    try {
+      await saveRecent(command);
+    } catch {
+      // Recency tracking is best-effort; running the command is more important.
+    }
+
+    try {
+      emitCommand(command.command);
+    } finally {
+      exit();
+    }
+  };
+
+  const handleTemplateSubmit = async (values: Record<string, string>) => {
+    const command = state.selectedCommand;
+
+    if (!command || commandSelected.current) {
+      return;
+    }
+
+    commandSelected.current = true;
+
+    try {
+      await saveRecent(command);
+    } catch {
+      // Recency tracking is best-effort; running the command is more important.
+    }
+
+    try {
+      emitCommand(fillTemplate(command.command, values));
+    } finally {
+      exit();
+    }
   };
 
   const handleSwitchToSearch = () => {
@@ -146,26 +190,25 @@ You can fix this by:
   };
 
   const handleToggleFavorite = async (commandId: number) => {
-    const updatedFavs = await toggleFavoriteUtil(commandId);
-    setState(prev => ({ ...prev, favorites: updatedFavs }));
+    try {
+      const updatedConfig = await persistMutation(config => toggleFavoriteInConfig(config, commandId));
+      setState(prev => ({ ...prev, favorites: updatedConfig.favorites }));
+    } catch (favoriteError) {
+      setError(actionError('update favorites', favoriteError));
+    }
   };
 
   const handleAddCommand = async (command: Command) => {
-    if (!state.commands) return;
-
-    const config = await loadConfig();
-    const nextId = config?.nextId || 1;
-    const newCommand = { ...command, id: nextId };
-    const newCommands = [...state.commands, newCommand];
-    const newConfig = { commands: newCommands, favorites: state.favorites, recent: [], nextId: nextId + 1 };
-
-    await saveConfig(newConfig);
-    setState(prev => ({
-      ...prev,
-      mode: 'menu',
-      commands: newCommands,
-      commandTimestamps: new Map(prev.commandTimestamps)
-    }));
+    try {
+      const updatedConfig = await persistMutation(config => addCommand(config, command));
+      setState(prev => ({
+        ...prev,
+        mode: 'menu',
+        commands: updatedConfig.commands,
+      }));
+    } catch (addError) {
+      setError(actionError('add the command', addError));
+    }
   };
 
   const handleAddCancel = () => {
@@ -181,78 +224,31 @@ You can fix this by:
   };
 
   const handleDuplicateCommand = async (command: Command) => {
-    if (!state.commands) return;
-
-    const config = await loadConfig();
-    const nextId = config?.nextId || 1;
-    const duplicatedCommand: Command = {
-      ...command,
-      id: nextId,
-      name: `${command.name} (Copy)`,
-    };
-    const newCommands = [...state.commands, duplicatedCommand];
-    const newConfig = { commands: newCommands, favorites: state.favorites, recent: [], nextId: nextId + 1 };
-
-    await saveConfig(newConfig);
-    setState(prev => ({
-      ...prev,
-      commands: newCommands,
-      commandTimestamps: new Map(prev.commandTimestamps)
-    }));
+    try {
+      const updatedConfig = await persistMutation(config => duplicateCommand(config, command));
+      setState(prev => ({
+        ...prev,
+        commands: updatedConfig.commands,
+      }));
+    } catch (duplicateError) {
+      setError(actionError('duplicate the command', duplicateError));
+    }
   };
 
   const handleEditSubmit = async (updatedCommand: Command) => {
-    if (!state.commands || !state.editingCommand) return;
-
-    const originalId = state.editingCommand.id;
-    const newCommands = state.commands.map(c => c.id === originalId ? updatedCommand : c);
-    const config = await loadConfig();
-    const newConfig = { commands: newCommands, favorites: state.favorites, recent: state.recentCommands.map(c => ({ id: c.id, timestamp: Date.now() })), nextId: config?.nextId || 1 };
-
-    await saveConfig(newConfig);
-
-    setState(prev => ({
-      ...prev,
-      mode: 'menu',
-      commands: newConfig.commands,
-      editingCommand: null,
-    }));
-  };
-
-  const handleDeleteCommand = async (commandId: number) => {
-    if (!state.commands) return;
-
     try {
-      const newCommands = state.commands.filter(c => c.id !== commandId);
-      const config = await loadConfig();
-      const newConfig = { commands: newCommands, favorites: state.favorites, recent: [], nextId: config?.nextId || 1 };
-
-      await saveConfig(newConfig);
-
-      const newFavorites = state.favorites.filter(f => f !== commandId);
-      await saveFavorites(newFavorites);
-
-      const recent = state.recentCommands.filter(c => c.id !== commandId);
-
-      const newTimestamps = new Map(state.commandTimestamps);
-      newTimestamps.delete(commandId);
-
-      await clearRecent();
-      for (const cmd of recent) {
-        await saveRecent({ id: cmd.id });
-      }
-
+      const updatedConfig = await persistMutation(config => updateCommand(config, updatedCommand));
       setState(prev => ({
         ...prev,
         mode: 'menu',
-        commands: newCommands,
-        recentCommands: recent,
-        favorites: newFavorites,
-        commandTimestamps: newTimestamps
+        commands: updatedConfig.commands,
+        editingCommand: null,
+        recentCommands: prev.recentCommands.map(command => (
+          command.id === updatedCommand.id ? updatedCommand : command
+        )),
       }));
-    } catch (e) {
-      console.error(e);
-      setError('Failed to delete command');
+    } catch (editError) {
+      setError(actionError('save the command', editError));
     }
   };
 
@@ -261,7 +257,8 @@ You can fix this by:
   };
 
   const handleShowDeleteConfirm = (commandId: number) => {
-    const command = state.commands?.find(cmd => cmd.id === commandId) ?? null;
+    const command = state.commands.find(existing => existing.id === commandId);
+
     if (command) {
       setState(prev => ({
         ...prev,
@@ -279,18 +276,52 @@ You can fix this by:
     }));
   };
 
+  const handleDeleteCommand = async (commandId: number) => {
+    try {
+      const updatedConfig = await persistMutation(config => removeCommand(config, commandId));
+
+      setState(prev => {
+        const commandTimestamps = new Map(prev.commandTimestamps);
+        commandTimestamps.delete(commandId);
+
+        return {
+          ...prev,
+          mode: 'menu',
+          showDeleteConfirm: false,
+          deleteCommand: null,
+          commands: updatedConfig.commands,
+          favorites: updatedConfig.favorites,
+          recentCommands: prev.recentCommands.filter(command => command.id !== commandId),
+          commandTimestamps,
+        };
+      });
+    } catch (deleteError) {
+      setError(actionError('delete the command', deleteError));
+    }
+  };
+
+  const loadingFallback = <Box><Text>Loading...</Text></Box>;
+
   if (loading) {
     return <Box><Text>Loading...</Text></Box>;
   }
 
   if (error) {
-    return <Box><Text color="red">{error}</Text></Box>;
+    return (
+      <Box flexDirection="column">
+        <Text color="red">{error}</Text>
+        <Box marginTop={1}>
+          <Text dimColor>Press Ctrl+C to quit.</Text>
+        </Box>
+      </Box>
+    );
   }
 
   if (state.mode === 'template' && state.selectedCommand) {
     const placeholders = extractPlaceholders(state.selectedCommand.command);
+
     return (
-      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+      <Suspense fallback={loadingFallback}>
         <TemplatePrompt
           placeholders={placeholders}
           onSubmit={handleTemplateSubmit}
@@ -302,9 +333,9 @@ You can fix this by:
 
   if (state.mode === 'search') {
     return (
-      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+      <Suspense fallback={loadingFallback}>
         <CommandSearch
-          allCommands={state.commands!}
+          allCommands={state.commands}
           recentCommands={state.recentCommands}
           favorites={state.favorites}
           onSelect={handleSelectCommand}
@@ -316,9 +347,9 @@ You can fix this by:
 
   if (state.mode === 'add') {
     return (
-      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+      <Suspense fallback={loadingFallback}>
         <AddCommandForm
-          existingCommands={state.commands!}
+          existingCommands={state.commands}
           onSubmit={handleAddCommand}
           onCancel={handleAddCancel}
         />
@@ -328,10 +359,10 @@ You can fix this by:
 
   if (state.mode === 'edit_command' && state.editingCommand) {
     return (
-      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+      <Suspense fallback={loadingFallback}>
         <EditCommandForm
           command={state.editingCommand}
-          existingCommands={state.commands!}
+          existingCommands={state.commands}
           onSubmit={handleEditSubmit}
           onCancel={handleCommandEditCancel}
         />
@@ -340,18 +371,14 @@ You can fix this by:
   }
 
   if (state.showDeleteConfirm && state.deleteCommand) {
+    const commandToDelete = state.deleteCommand;
+
     return (
-      <Suspense fallback={<Box><Text>Loading...</Text></Box>}>
+      <Suspense fallback={loadingFallback}>
         <DeleteConfirmation
           key="delete-confirmation"
-          command={state.deleteCommand}
-          onConfirm={() => {
-            handleHideDeleteConfirm();
-            const commandId = state.deleteCommand?.id;
-            if (commandId !== undefined) {
-              handleDeleteCommand(commandId);
-            }
-          }}
+          command={commandToDelete}
+          onConfirm={() => handleDeleteCommand(commandToDelete.id)}
           onCancel={handleHideDeleteConfirm}
         />
       </Suspense>
@@ -360,8 +387,7 @@ You can fix this by:
 
   return (
     <CommandMenu
-      commands={state.commands!}
-      recentCommands={state.recentCommands}
+      commands={state.commands}
       commandTimestamps={state.commandTimestamps}
       favorites={state.favorites}
       onSelect={handleSelectCommand}

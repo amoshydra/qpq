@@ -10,9 +10,4 @@ export interface Config {
   favorites: number[];
   recent: RecentCommand[];
   nextId: number;
-  historyBufferSize?: number;
-}
-
-export interface CliArgs {
-  configPath?: string;
 }

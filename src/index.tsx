@@ -2,11 +2,10 @@
 
 import fs from 'fs';
 import { render } from 'ink';
-import os from 'os';
 import path from 'path';
 import { App } from './components/App.js';
-import FullScreen from './utils/fullscreen.js';
 import { getDefaultConfigPath } from './utils/config.js';
+import { enterFullscreen, exitFullscreen } from './utils/fullscreen.js';
 
 const validFlags = ['--version', '-v', '--help', '-h', '--paths'];
 const args = process.argv.slice(2);
@@ -60,9 +59,12 @@ if (pathsFlag) {
   process.exit(0);
 }
 
-const program = render(
-  <FullScreen>
-    <App />
-  </FullScreen>
-);
-await program.waitUntilExit();
+enterFullscreen();
+process.once('exit', exitFullscreen);
+
+try {
+  const program = render(<App />);
+  await program.waitUntilExit();
+} finally {
+  exitFullscreen();
+}

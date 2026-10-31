@@ -17,10 +17,11 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 - **Menu Mode**: Command list sorted with favorites first, then by recency
 - **Favorites**: Pin frequently used commands at the top (press `f` to toggle)
 - **All Commands**: Sorted by recency - recently used commands appear first
-- **Direct Actions**: Add, edit, or delete commands directly from the menu
-- **Search Mode**: Real-time string search through all commands
+- **Direct Actions**: Add, edit, clone, or delete commands directly from the menu
+- **Search Mode**: Real-time substring search across names, commands, descriptions, tags, and aliases
 - **Template Support**: Command placeholders that prompt for values
-- **Platform Aware**: Works on Linux, macOS, and Windows
+- **Cross-platform Config**: Uses the right config directory on Linux, macOS, and Windows
+- **POSIX Launcher**: Executes the selected command through `qpq.sh` on Linux and macOS
 - **Auto-init**: Creates config directory and sample file if missing
 
 | **Menu Mode** | **Add from shell** |
@@ -33,6 +34,8 @@ A terminal-based command launcher for frequently used commands. Built with TypeS
 
 ## Installation
 
+Requires Node.js 20 or newer.
+
 ### Try instantly (no install)
 ```bash
 npx qpq
@@ -43,6 +46,10 @@ npx qpq
 npm i -g qpq
 qpq
 ```
+
+### Windows
+
+The npm launcher is a POSIX shell script (`qpq.sh`), so end-to-end command execution is supported on Linux and macOS. On Windows you can build and run the UI with `node dist/index.js`, but selected commands are only printed rather than executed automatically.
 
 ## Usage
 
@@ -70,6 +77,7 @@ qpq --paths      # Show configuration paths
 | a | Add new command |
 | d | Delete selected command |
 | e | Edit selected command |
+| c | Clone selected command |
 | / | Switch to search mode |
 | Escape / Ctrl+C | Quit |
 
@@ -79,7 +87,7 @@ qpq --paths      # Show configuration paths
 |-----|--------|
 | Type | Search query |
 | ↓↑ | Navigate results |
-| Enter / 1-9 | Select command |
+| Enter | Select command |
 | Escape | Return to menu |
 | Backspace | Delete character |
 | Ctrl+C | Quit |
@@ -190,6 +198,21 @@ Use `{placeholder}` syntax for dynamic values:
 
 When you select a command with placeholders, you'll be prompted to enter each value. Use `Escape` to cancel.
 
+Placeholder order defaults to the order they appear in the command. Add an optional sort index to control the prompt order explicitly:
+
+```json
+{
+  "name": "ADB Connect",
+  "command": "adb pair {ip:3}:{port:2}; adb connect {host:1}:{port}"
+}
+```
+
+Placeholders with a lower index are prompted first. Placeholders without an index use `0`, and ties fall back to their position in the command.
+
+### Command execution and trust
+
+qpq does not sandbox commands. It evaluates the selected command in your shell, and template values are inserted verbatim. Treat a qpq config file like a shell script and only use configs you trust.
+
 ## Development
 
 ```bash
@@ -197,8 +220,12 @@ pnpm install         # Install dependencies
 pnpm run dev         # Run with tsx (auto-reload)
 pnpm run build       # Compile to dist/
 pnpm run type-check  # TypeScript checks
-pnpm run test        # Run tests
+pnpm run test        # Run tests in watch mode
+pnpm run test:run    # Run tests once
+pnpm start           # Run the built app
 ```
+
+`pnpm run dev` and `pnpm start` render the TUI but do not execute selected commands. Use the wrapper after building to test the full flow:
 
 ### From source (development)
 ```bash
@@ -214,13 +241,13 @@ pnpm run build
 
 ### Why qpq.sh wrapper?
 
-`qpq.sh` captures your shell's **in-memory history** before launching. Without it, only previously saved history (on disk) is visible.
+`qpq.sh` launches the TUI, then evaluates the selected command after the UI exits. Running `node dist/index.js` directly renders the menu but only prints the selected command instead of running it.
 
-The wrapper ensures you see commands you just typed, working across all shell configurations.
+The wrapper also propagates the exit status of the command it runs.
 
 ### Why don't directory changes persist after running a command?
 
-When you select a command from qpq, it runs in a subprocess. Commands like `cd`, `export`, `alias` (which modify the environment) will take effect in the subprocess. **Environment changes won't persist** after the command exits - you'll return to the original directory and environment.
+When you select a command from qpq, the wrapper evaluates it in a child shell. Commands like `cd`, `export`, and `alias` run, but their effects disappear when that shell exits. **Environment changes won't persist** - you'll return to the original directory and environment.
 
 **Workaround**: Append `$SHELL` to keep a new shell open:
 
@@ -242,18 +269,21 @@ This opens a new interactive shell in the target directory. Exit the shell to re
 
 ### How does history capture work?
 
-Tries three methods (in order):
-1. **Environment variable** - from wrapper script (fastest, has current session)
-2. **History files** - reads `.bash_history`, `.zsh_history` from disk
-3. **Subprocess** - spawns shell to run `history` built-in
+qpq reads the history file for the detected shell:
 
-If your shell has `INC_APPEND_HISTORY` enabled (many zsh configs), running `node dist/index.js` directly also works.
+- zsh: `~/.zsh_history`
+- bash: `~/.bash_history`
+- fish: `~/.local/share/fish/fish_history`
+- PowerShell: the PSReadLine history file
+
+It also tries the shell's `history` builtin as a fallback. Entries from the current session may not appear until your shell flushes them to disk; for example, zsh users with `INC_APPEND_HISTORY` or `SHARE_HISTORY` will see them immediately.
 
 ## Error Handling
 
-If config file is corrupted, the app will show:
+If the config file is corrupted, the app will show:
+
 1. Full error message
 2. File location
 3. Instructions to fix manually
 
-The app never modifies existing config files - only creates them if missing.
+Config writes are atomic, so a failed save does not leave a partially-written config behind. The app does not automatically repair or overwrite a corrupted config file.

@@ -16,12 +16,12 @@ export function CommandItem({ command, isSelected, index, isFavorite = false }: 
         <Text color={color}>{index + 1}.</Text>
       </Box>
       <Box width={30}>
-        <Text inverse={isSelected} color={color}>
+        <Text inverse={isSelected} color={color} wrap="truncate-end">
           {command.name}
         </Text>
       </Box>
-      <Box>
-        <Text dimColor>{command.description || ''}</Text>
+      <Box flexGrow={1} overflowX="hidden">
+        <Text dimColor wrap="truncate-end">{command.description || ''}</Text>
       </Box>
     </Box>
   );
