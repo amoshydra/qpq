@@ -5,9 +5,9 @@
 
 ### ⚠ BREAKING CHANGES
 
-* Node fallback removed; npm install now requires a successful native binary download; Windows npm install is unsupported.
-* qpq now runs the native Go binary by default, and `pnpm install` / `npm install` downloads a platform binary from GitHub Releases on first install. Windows npm installs remain unsupported, use the release .exe instead. Existing JSON config files remain compatible.
-* **go:** the native Go implementation is intended to replace the Node CLI. Installation moves from the npm/Node wrapper to native binaries, and runtime, packaging, and release artifacts differ from the existing qpq distribution. Existing JSON config files remain compatible. Building from source now requires Go 1.24+.
+* Node fallback removed; npm install now fails unless the matching native binary is installed; Windows npm install is unsupported.
+* qpq now runs the native Go binary by default. The npm package installs the binary from the matching optional platform package (`qpq-linux-x64`, `qpq-darwin-arm64`, and so on); nothing is downloaded from GitHub Releases during install. Windows npm installs remain unsupported, use the release .exe instead. Existing JSON config files remain compatible.
+* **go:** the native Go implementation replaces the Node CLI. Installation moves from the npm/Node wrapper to native binaries, and runtime, packaging, and release artifacts differ from the previous qpq distribution. Existing JSON config files remain compatible. Building from source now requires Go 1.24+.
 
 ### Features
 
