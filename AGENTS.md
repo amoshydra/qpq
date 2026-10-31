@@ -4,7 +4,7 @@ This file provides coding conventions and development guidelines for agentic cod
 
 ## Project Overview
 
-qpq is a TypeScript terminal UI application built with React and Ink. It provides a menu-based launcher for frequently used commands, featuring favorites, recent commands, search, and edit modes.
+qpq is a terminal command launcher. The primary runtime is native Go + Bubble Tea in `go/`. A TypeScript/Ink implementation in `src/` remains as the fallback path in the npm wrapper.
 
 ## Build & Development Commands
 
@@ -18,6 +18,11 @@ pnpm run type-check   # TypeScript check
 pnpm run test         # Run tests in watch mode
 pnpm run test:run     # Run tests once
 pnpm start            # Run built app
+
+cd go
+make check            # Go tests + vet
+make build            # Native binary at go/qpq
+make cross            # Native release binaries
 ```
 
 `pnpm run dev` and `pnpm start` render the TUI only. Selected commands are printed but not executed; use `./qpq.sh` after a build to test the shell integration.
@@ -34,11 +39,12 @@ The husky pre-commit hook runs `type-check` and `test:run`. The pre-push hook ru
 ### File Structure & Naming
 
 ```
+go/                 # Primary native implementation
 src/
-├── components/     # React components (PascalCase: CommandMenu.tsx)
-├── utils/          # Utility functions (camelCase: loadConfig.ts)
-├── types/          # TypeScript types (command.ts)
-└── test/           # Tests for repo-level scripts
+├── components/     # Node fallback React components
+├── utils/          # Node fallback utilities
+├── types/          # TypeScript types
+└── test/           # Wrapper/postinstall/component tests
 ```
 
 **Conventions:**
@@ -242,10 +248,11 @@ Use `mutateConfig` or the pure helpers in `src/utils/configMutations.ts`; avoid 
 
 ### Key Dependencies
 
-- `ink` v6 - React for terminal UIs
-- `react` v19 - UI library
-- `ink-text-input` - Text input handling
-- `ink-scroll-list` - Scrolling command lists
+- `bubbletea` v1 - Go TUI runtime (primary)
+- `lipgloss` - Go terminal styling
+- `ink` v6 + `react` v19 - Node fallback TUI
+- `ink-text-input` - Node fallback text input
+- `ink-scroll-list` - Node fallback command lists
 
 ### Application Modes
 

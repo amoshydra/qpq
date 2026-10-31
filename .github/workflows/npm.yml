@@ -83,6 +83,11 @@ jobs:
         working-directory: go
         run: make cross
 
+      - name: Create Go checksums
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        working-directory: go
+        run: cd dist && sha256sum qpq-* > SHA256SUMS
+
       - name: Upload Go binaries to release
         if: ${{ steps.release.outputs.release_created == 'true' }}
         env:
