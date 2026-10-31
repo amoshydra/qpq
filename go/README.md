@@ -20,11 +20,8 @@ Implemented:
 
 Known gaps:
 
-- current-session in-memory shell history (the same limitation as the Node version; commands must be flushed to the history file)
-- the npm wrapper falls back to Node only when the native binary cannot be downloaded
-- terminal edge cases may still differ from the Ink version
+- current-session in-memory shell history (commands must be flushed to the history file)
 
-This is the native implementation. The Node/Ink version remains available as a fallback in the npm package.
 
 ## Prebuilt binaries
 
@@ -71,7 +68,7 @@ make build
 ./qpq --version
 ```
 
-Remove the existing npm/Node installation first, then install the native binary as `qpq`:
+Remove the existing npm installation first, then install the native binary as `qpq`:
 
 ```bash
 npm uninstall -g qpq
@@ -92,7 +89,7 @@ make build
 make install
 ```
 
-If the npm/Node version is installed, remove it first:
+If an npm installation is present, remove it first:
 
 ```bash
 npm uninstall -g qpq

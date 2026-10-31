@@ -1,2 +1,6 @@
-pnpm run type-check
-pnpm run test:run
+node --test
+
+cd go
+test -z "$(gofmt -l .)"
+go vet ./...
+go test ./...

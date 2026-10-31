@@ -16,6 +16,7 @@ vet:
 	go vet ./...
 
 check: test vet
+	test -z "$$(gofmt -l .)"
 
 install: build
 	mkdir -p "$(PREFIX)/bin"
@@ -24,6 +25,7 @@ install: build
 	chmod 755 "$(PREFIX)/bin/$(BINARY)"
 
 cross:
+	rm -rf dist
 	mkdir -p dist
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$(LDFLAGS)" -o dist/qpq-linux-amd64 .
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="$(LDFLAGS)" -o dist/qpq-linux-arm64 .

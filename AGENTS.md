@@ -4,280 +4,112 @@ This file provides coding conventions and development guidelines for agentic cod
 
 ## Project Overview
 
-qpq is a terminal command launcher. The primary runtime is native Go + Bubble Tea in `go/`. A TypeScript/Ink implementation in `src/` remains as the fallback path in the npm wrapper.
+qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) and a postinstall downloader (`scripts/postinstall.mjs`) that installs the native binary for the current platform.
+
+Do not reintroduce the previous TypeScript/Ink runtime. The final Node implementation is preserved at the `node-final` tag.
 
 ## Build & Development Commands
 
-This project uses **pnpm** as the package manager.
+Go is the primary implementation. The repository uses pnpm only for npm packaging and installer tests.
 
 ```bash
-pnpm install          # Install dependencies
-pnpm run dev          # Dev mode (auto-reload with tsx)
-pnpm run build        # Build for production
-pnpm run type-check   # TypeScript check
-pnpm run test         # Run tests in watch mode
-pnpm run test:run     # Run tests once
-pnpm start            # Run built app
-
 cd go
-make check            # Go tests + vet
-make build            # Native binary at go/qpq
-make cross            # Native release binaries
+make check       # gofmt check + go vet + go test
+make build       # build ./qpq
+make cross       # build all release targets
+make install     # install to ~/.local/bin/qpq
 ```
 
-`pnpm run dev` and `pnpm start` render the TUI only. Selected commands are printed but not executed; use `./qpq.sh` after a build to test the shell integration.
+Installer/package tests:
+
+```bash
+pnpm install
+pnpm test        # node:test launcher + postinstall tests
+pnpm run lint:package
+```
 
 **Hooks:**
-The husky pre-commit hook runs `type-check` and `test:run`. The pre-push hook runs `type-check`, `test:run`, and `build`.
+The husky pre-commit hook runs Node installer tests, `gofmt -l`, `go vet`, and `go test`. The pre-push hook also runs `make build`.
 
 **Build Output:**
-- Built files are output to `dist/` directory
-- The repo-root `qpq.sh` wrapper resolves `dist/index.js`, evaluates the selected command, and propagates its exit status
+- `go/qpq` is the local binary (ignored)
+- `go/dist/qpq-*` are release binaries (ignored)
+- `qpq.sh` is the npm entry point
+- `bin/qpq-native` is created by npm postinstall (ignored)
 
-## Code Style Guidelines
-
-### File Structure & Naming
+## File Structure
 
 ```
-go/                 # Primary native implementation
-src/
-├── components/     # Node fallback React components
-├── utils/          # Node fallback utilities
-├── types/          # TypeScript types
-└── test/           # Wrapper/postinstall/component tests
+go/                 # Native Go implementation
+├── main.go         # Entry point, flags, shell execution
+├── config.go       # Config load/save/migration, commands, ordering
+├── model.go        # Bubble Tea model, screens, key handling, views
+├── history.go      # Shell history file/subprocess capture
+├── templates.go    # Placeholder extraction and filling
+├── form.go         # Command form validation
+└── *_test.go       # Go tests
+
+scripts/            # npm installer tooling
+├── postinstall.mjs # Downloads/verifies platform binary from GitHub releases
+├── postinstall.test.mjs
+└── wrapper.test.mjs
+
+qpq.sh              # npm bin: execs bin/qpq-native
 ```
 
-**Conventions:**
-- Components: PascalCase (e.g., `CommandItem.tsx`)
-- Utility files: camelCase with descriptive names (e.g., `configMutations.ts`)
-- Type files: camelCase (e.g., `command.ts`)
-- Test files: Same name as source with `.test` suffix (e.g., `config.test.ts`)
+## Go Style
 
-### Import Style
+- Run `gofmt -w` on all Go files.
+- Use idiomatic Go naming and explicit error handling.
+- Return errors with context (`fmt.Errorf("...: %w", err)`).
+- Keep pure logic in package-level functions so it can be tested without Bubble Tea.
+- Use value receivers for Bubble Tea models where practical; keep update functions deterministic.
+- Avoid global mutable state except style variables and regexes.
+- Keep config writes atomic: write a temporary file, then rename.
+- Preserve command IDs across mutations. IDs are the identity used by favorites and recents.
 
-- **All imports must use `.js` extensions** (Node.js ESM requirement)
-- Group imports: external libraries first, then local modules
-- Use named exports > default exports
-- Use type-only imports for TypeScript types
+## Config Persistence
 
-```typescript
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import type { Command } from '../types/command.js';
-import { loadConfig } from '../utils/config.js';
-```
+- Config paths are shared with the former Node implementation:
+  - Linux/Termux: `~/.local/state/qpq/config.json`
+  - macOS: `~/Library/Application Support/qpq/config.json`
+  - Windows: `%LocalAppData%\qpq\config.json`
+- Add/edit/delete/clone/favorite operations must not corrupt `recent` or `favorites`.
+- Delete removes the command from `commands`, `favorites`, and `recent` in one save.
+- Recent history is capped at 20 entries and must remain newest-first.
+- Normalize missing IDs, duplicate IDs, string favorites, and name-based recent entries when loading.
+- Migrate legacy `fav.json`, `favorites.json`, and `recent.json` only when the main config is absent. Never delete legacy files if migration fails.
 
-### TypeScript Patterns
+## TUI Behavior
 
-- Use `type` for simple type aliases
-- Use `interface` for object shapes when using implements/extends
-- Explicitly annotate function parameters and return types
-
-```typescript
-export type Command = {
-  name: string;
-  command: string;
-  description?: string;
-  tags?: string[];
-};
-```
-
-### React Component Patterns
-
-- Functional components with hooks (no class components)
-- Props interfaces above the component definition
-- Destructure props in the function signature with type annotations
-
-```typescript
-interface CommandItemProps {
-  command: Command;
-  isSelected: boolean;
-  index: number;
-  isFavorite?: boolean;
-}
-
-export function CommandItem({ command, isSelected, index, isFavorite = false }: CommandItemProps) {
-  // Component implementation
-}
-```
-
-### Formatting
-
-- **2 spaces** for indentation
-- Maximum line length: ~100 characters
-- Opening brace on the same line for functions/objects
-
-```typescript
-function foo() {
-  return x + 1;
-}
-
-const bar = (x: number) => x + 1;
-```
-
-### Error Handling Patterns
-
-- Use try-catch blocks with descriptive error messages
-- Check access and handle permission errors for filesystem operations
-- Provide context in error messages (file paths, operation type)
-
-```typescript
-async function ensureConfigDir(): Promise<void> {
-  const configDir = getConfigDir();
-  try {
-    await fs.promises.access(configDir);
-  } catch {
-    await fs.promises.mkdir(configDir, { recursive: true });
-  }
-}
-```
-
-### Platform-Specific Considerations
-
-- Use `path.join()` for file path construction
-- Use `os.platform()` for platform detection
-
-```typescript
-function getConfigDir(): string {
-  const platform = os.platform();
-  const homeDir = os.homedir();
-
-  switch (platform) {
-    case 'win32':
-      return path.join(homeDir, 'AppData', 'Local', 'qpq');
-    case 'darwin':
-      return path.join(homeDir, 'Library', 'Application Support', 'qpq');
-    default:
-      return path.join(homeDir, '.local', 'state', 'qpq');
-  }
-}
-```
-
-**Config Paths by Platform:**
-- **Windows**: `%LocalAppData%\qpq\config.json`
-- **macOS**: `~/Library/Application Support/qpq/config.json`
-- **Linux/Unix**: `~/.local/state/qpq/config.json`
-
-The config module is cross-platform. The `qpq.sh` launcher is POSIX-only (Linux/macOS).
-
-## State Management
-
-- Use React's `useState` for local component state
-- Use `useEffect` for side effects and initialization
-- Use `useInput` from Ink for keyboard handling
-- For lists that can reorder (for example when toggling favorites), anchor selection to `command.id` instead of an array index
-- Guard single-letter shortcuts with `!key.ctrl`; Ink reports Ctrl+D as `input === 'd'` with `ctrl: true`
-
-```typescript
-const [selectedId, setSelectedId] = useState<number | null>(null);
-const selectedIndex = getSelectedIndex(allCommands, selectedId);
-
-useInput((input, key) => {
-  if (key.ctrl && input === 'c') {
-    exit();
-    return;
-  }
-
-  if (key.return && allCommands.length > 0) {
-    onSelect(allCommands[selectedIndex]);
-  }
-});
-```
-
-## File Operations
-
-- Use `fs.promises` for async filesystem operations
-- Handle access errors with `fs.promises.access()` checks
-- Provide clear error messages with file paths
-- Write config files atomically (write a temporary file, then rename it)
-
-```typescript
-async function writeConfigFile(configPath: string, config: Config): Promise<void> {
-  const temporaryPath = `${configPath}.${process.pid}.tmp`;
-  try {
-    await fs.promises.writeFile(temporaryPath, JSON.stringify(config, null, 2), 'utf-8');
-    await fs.promises.rename(temporaryPath, configPath);
-  } catch (error) {
-    await fs.promises.rm(temporaryPath, { force: true }).catch(() => {});
-    throw new Error(`Failed to write config file at ${configPath}: ${String(error)}`);
-  }
-}
-```
-
-## Project-Specific Notes
-
-### Config Locations
-
-- Linux: `~/.local/state/qpq/config.json`
-- macOS: `~/Library/Application Support/qpq/config.json`
-- Windows: `%LocalAppData%\qpq\config.json`
-
-### Config Persistence
-
-Commands use stable numeric `id` values as their identity. Favorites and recent history reference those IDs, so mutations must preserve them:
-
-- Add/duplicate: append a command and advance `nextId`; leave `favorites` and `recent` untouched.
-- Edit: replace the command with the same ID; leave `favorites` and `recent` untouched.
-- Delete: remove the command ID from `commands`, `favorites`, and `recent` in one save.
-- Recent history: `saveRecent` moves an ID to the front without reordering the rest.
-
-Use `mutateConfig` or the pure helpers in `src/utils/configMutations.ts`; avoid loading and saving the config separately in a UI handler.
-
-### Data Files
-
-- **Config file:** JSON with `commands`, `favorites`, `recent`, and `nextId`
-- **Sample file:** `src/utils/sample-commands.ts` - provides default commands (bundled at build time)
-
-**Sample command format:**
-```json
-{
-  "commands": [
-    {
-      "id": 1,
-      "name": "Git Status",
-      "command": "git status",
-      "description": "Show git status",
-      "tags": ["git"]
-    }
-  ],
-  "favorites": [],
-  "recent": [],
-  "nextId": 2
-}
-```
-
-### Key Dependencies
-
-- `bubbletea` v1 - Go TUI runtime (primary)
-- `lipgloss` - Go terminal styling
-- `ink` v6 + `react` v19 - Node fallback TUI
-- `ink-text-input` - Node fallback text input
-- `ink-scroll-list` - Node fallback command lists
-
-### Application Modes
-
-- `menu` - Main command menu
-- `search` - Search mode (substring search)
-- `template` - Template variable prompting
-- `add` - Add new command form
-- `edit_command` - Edit existing command form
-
-Delete confirmation is an overlay controlled by `showDeleteConfirm` / `deleteCommand` rather than a separate mode.
-
-### Shell Integration
-
-`qpq.sh` captures app stderr, receives the selected command through `QPQ_COMMAND_FILE` (falling back to the `__QEXEC__` stderr marker), evaluates it, and exits with the command's status. It resolves npm symlinks without relying on GNU `readlink -f`.
-
-History for the Add Command screen is read from the detected shell's history file, with a `history` subprocess fallback. Commands from the current session may not appear until the shell flushes its history file.
+- Menu: favorites first in config order, then non-favorites by recency, then never-used commands alphabetically.
+- Search: recent results first, then remaining commands. Match name, command text, description, tags, and aliases.
+- Key routing is implemented in `model.go` screen update methods. Keep guards for `Ctrl` combinations (especially `Ctrl+D`, which Bubble Tea reports as `ctrl+d`).
+- Text fields support cursor movement, backspace, delete, home/end, spaces, and multi-rune input.
+- Template placeholders support `{name}` and `{name:index}`.
+- Command execution happens after Bubble Tea restores the terminal. Use the user's shell on POSIX and PowerShell on Windows.
 
 ## Testing
 
-- Put pure logic and key-routing tests in `src/utils/*.test.ts`.
-- Key routing lives in `src/utils/inputActions.ts`; `getMenuAction`, `getSearchAction`, etc. are pure and should be tested there rather than only through components.
-- Targeted component tests use the fake stdin/stdout harness in `src/test/ink.ts`. Assert visible text fragments and callback calls, not full ANSI snapshots.
-- Use `pnpm run test:run` in hooks and CI; `pnpm run test` is watch mode.
-- Keep a few PTY smoke tests for things the component harness cannot cover: fullscreen behavior, scrolling, and real command execution through `qpq.sh`.
+- Add pure Go tests for config, ordering, search, forms, templates, and history parsing.
+- Add model tests for screen transitions and mutations.
+- Keep installer tests in `scripts/*.test.mjs` using `node:test`.
+- Use PTY smoke tests (`expect`/`script`) for fullscreen behavior, history, and real command execution.
+- Run:
+  ```bash
+  cd go && make check
+  pnpm test
+  pnpm run lint:package
+  ```
+
+## Release Workflow
+
+- `.github/workflows/ci.yml` runs installer tests and Go tests/builds.
+- `.github/workflows/npm.yml` builds native binaries, creates `SHA256SUMS`, uploads them to the GitHub release, then publishes npm.
+- Release assets are named `qpq-linux-*`, `qpq-android-arm64`, `qpq-darwin-*`, `qpq-windows-*.exe`.
+- npm `postinstall` downloads the matching asset and verifies its checksum before writing `bin/qpq-native`.
+- The npm package intentionally supports Linux and macOS (`os` field). Windows users install the release `.exe` directly.
 
 ---
 
-This document provides a concise overview of the coding conventions for this project. Always maintain consistency with the existing codebase.
+Keep changes consistent with the native-only architecture. If a feature needs to be added, add it to Go and cover it with a Go test.
