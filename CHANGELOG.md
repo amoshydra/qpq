@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/amoshydra/qpq/compare/v0.3.0...v0.3.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **npm:** resolve platform package at launch ([367a6ef](https://github.com/amoshydra/qpq/commit/367a6ef2306cd7615dba9799031c890767f365da))
+
 ## [0.3.0](https://github.com/amoshydra/qpq/compare/v0.2.8...v0.3.0) (2026-10-31)
 
 
