@@ -71,6 +71,24 @@ jobs:
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: pnpm run lint:package
 
+      - name: Install Go
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+
+      - name: Build Go binaries
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        working-directory: go
+        run: make cross
+
+      - name: Upload Go binaries to release
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.release.outputs.tag_name }}" go/dist/* --clobber
+
       - name: Publish to npm
         if: ${{ steps.release.outputs.release_created == 'true' }}
         # Trusted publishing authenticates with OIDC and generates provenance

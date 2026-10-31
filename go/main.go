@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,6 +28,7 @@ func main() {
 			return
 		case "--paths":
 			fmt.Printf("Configuration paths:\n")
+			fmt.Printf("  Config directory: %s\n", filepath.Dir(path))
 			fmt.Printf("  Main config file: %s\n", path)
 			return
 		case "--help", "-h":

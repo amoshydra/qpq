@@ -11,18 +11,49 @@ Implemented:
 - menu with favorites and recents
 - search across names, command text, descriptions, tags, and aliases
 - favorite toggle
-- recents update on execution
+- add, edit, delete, and clone commands
+- template placeholders with `{name}` and `{name:index}` support
+- shell-history picker for add command
 - command execution with exit-status propagation
+- atomic config writes and legacy config migration
 - default config creation
 
-Not ported yet:
+Known gaps:
 
-- add/edit/delete/clone forms
-- template placeholders (`{name}` commands show a message instead of executing)
-- shell-history picker
-- full parity for terminal edge cases
+- current-session in-memory shell history (the same limitation as the Node version; commands must be flushed to the history file)
+- prebuilt release assets are produced by the release workflow, but this prototype is not yet the default `qpq` package
+- terminal edge cases may still differ from the Ink version
 
 This is a prototype, not a replacement release. Until it is merged, clone the `prototype/go-native` branch.
+
+## Prebuilt binaries
+
+Once a release includes the Go prototype, download the matching binary from the latest GitHub release:
+
+```bash
+# Termux (64-bit Android)
+curl -LO https://github.com/amoshydra/qpq/releases/latest/download/qpq-go-android-arm64
+chmod +x qpq-go-android-arm64
+mkdir -p "$PREFIX/bin"
+cp qpq-go-android-arm64 "$PREFIX/bin/qpq-go"
+
+# Linux x86_64
+curl -LO https://github.com/amoshydra/qpq/releases/latest/download/qpq-go-linux-amd64
+chmod +x qpq-go-linux-amd64
+mkdir -p "$HOME/.local/bin"
+cp qpq-go-linux-amd64 "$HOME/.local/bin/qpq-go"
+```
+
+Release assets are built by the `Release to NPM` workflow and attached to the GitHub release:
+
+- `qpq-go-android-arm64` — Termux / 64-bit Android
+- `qpq-go-linux-amd64` — Linux x86_64
+- `qpq-go-linux-arm64` — Linux ARM64 / Raspberry Pi 64-bit
+- `qpq-go-linux-armv7` — Raspberry Pi 32-bit (Pi 2/3/4)
+- `qpq-go-linux-armv6` — Raspberry Pi 1 / Zero
+- `qpq-go-darwin-amd64` — Intel macOS
+- `qpq-go-darwin-arm64` — Apple Silicon macOS
+- `qpq-go-windows-amd64.exe` — Windows x86_64
 
 ## Requirements
 
@@ -97,19 +128,24 @@ Or build all supported targets:
 
 ```bash
 make cross
-# dist/qpq-go-linux-amd64
-# dist/qpq-go-linux-arm64
-# dist/qpq-go-darwin-amd64
-# dist/qpq-go-darwin-arm64
-# dist/qpq-go-windows-amd64.exe
+# dist/qpq-go-linux-amd64       # Linux x86_64
+# dist/qpq-go-linux-arm64       # Linux ARM64 / Raspberry Pi 64-bit
+# dist/qpq-go-linux-armv7       # Raspberry Pi 32-bit (Pi 2/3/4)
+# dist/qpq-go-linux-armv6       # Raspberry Pi 1 / Zero
+# dist/qpq-go-android-arm64     # Termux on 64-bit Android (same binary as linux-arm64)
+# dist/qpq-go-darwin-amd64      # Intel macOS
+# dist/qpq-go-darwin-arm64      # Apple Silicon macOS
+# dist/qpq-go-windows-amd64.exe # Windows x86_64
 ```
 
-Copy the ARM64 binary to Termux, then:
+Termux runs the `android-arm64` binary. Raspberry Pi users should pick `linux-arm64` on a 64-bit OS, `linux-armv7` on a 32-bit Pi 2/3/4 OS, or `linux-armv6` for Pi 1/Zero.
+
+Copy the Termux binary to your device:
 
 ```bash
-chmod +x qpq-go-linux-arm64
+chmod +x qpq-go-android-arm64
 mkdir -p "$PREFIX/bin"
-cp qpq-go-linux-arm64 "$PREFIX/bin/qpq-go"
+cp qpq-go-android-arm64 "$PREFIX/bin/qpq-go"
 ```
 
 If a prebuilt static binary does not run on your Android/Termux setup, build it directly on the device with `make build`.
@@ -131,6 +167,10 @@ Use `qpq-go --paths` to print the exact path. If the file does not exist, a smal
 | `↑` / `↓` or `k` / `j` | Navigate |
 | `Enter` or `1`–`9` | Run selected command |
 | `f` | Toggle favorite |
+| `a` | Add command (from history or blank form) |
+| `e` | Edit selected command |
+| `d` | Delete selected command |
+| `c` | Clone selected command |
 | `/` | Search |
 | `Esc` / `q` | Quit |
 | `Ctrl+C` | Quit |
