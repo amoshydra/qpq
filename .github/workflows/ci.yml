@@ -63,3 +63,31 @@ jobs:
           temp_dir="$(mktemp -d)"
           ln -s "$GITHUB_WORKSPACE/qpq.sh" "$temp_dir/qpq"
           "$temp_dir/qpq" --version
+
+  go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build native binary
+        run: make build
+
+      - name: Cross-compile Termux binary
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o dist/qpq-go-linux-arm64 .
+
