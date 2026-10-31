@@ -73,37 +73,33 @@ func configPath() (string, error) {
 func defaultConfig() Config {
 	return Config{
 		Commands: []Command{
-			{
-				ID:          1,
-				Name:        "Git Status",
-				Command:     "git status",
-				Description: "Show working tree status",
-				Tags:        []string{"git"},
-			},
-			{
-				ID:          2,
-				Name:        "List Files",
-				Command:     "ls -la",
-				Description: "List files with details",
-				Tags:        []string{"system"},
-			},
-			{
-				ID:          3,
-				Name:        "Show Path",
-				Command:     "echo $PATH",
-				Description: "Show PATH environment variable",
-				Tags:        []string{"system"},
-			},
+			{ID: 1, Name: "Git Status", Command: "git status", Description: "Show git status", Tags: []string{"git"}},
+			{ID: 2, Name: "Git Pull", Command: "git pull origin {branch}", Description: "Pull from remote branch", Tags: []string{"git"}},
+			{ID: 3, Name: "Git Push", Command: "git push origin {branch}", Description: "Push to remote branch", Tags: []string{"git"}},
+			{ID: 4, Name: "Docker Build", Command: "docker build -t {tag} .", Description: "Build Docker image with tag", Tags: []string{"docker"}},
+			{ID: 5, Name: "Docker Run", Command: "docker run -it {image}", Description: "Run Docker container interactively", Tags: []string{"docker"}},
+			{ID: 6, Name: "NPM Install", Command: "npm install {package}", Description: "Install npm package", Tags: []string{"npm"}},
+			{ID: 7, Name: "List Files", Command: "ls -la", Description: "List all files with details", Tags: []string{"system"}},
+			{ID: 8, Name: "Show Path", Command: "echo $PATH", Description: "Show PATH environment variable", Tags: []string{"system"}},
+			{ID: 9, Name: "Disk Usage", Command: "df -h", Description: "Show disk usage", Tags: []string{"system"}},
 		},
 		Favorites: []int{},
 		Recent:    []RecentEntry{},
-		NextID:    4,
+		NextID:    10,
 	}
 }
 
 func loadConfig(path string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
+		migrated, migrationErr := migrateLegacyFiles(path)
+		if migrationErr != nil {
+			return Config{}, migrationErr
+		}
+		if migrated != nil {
+			return *migrated, nil
+		}
+
 		cfg := defaultConfig()
 		if saveErr := saveConfig(path, cfg); saveErr != nil {
 			return Config{}, fmt.Errorf("create config: %w", saveErr)
@@ -118,8 +114,75 @@ func loadConfig(path string) (Config, error) {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return Config{}, fmt.Errorf("parse config %s: %w", path, err)
 	}
+	if raw.Commands == nil {
+		return Config{}, fmt.Errorf("parse config %s: missing commands array", path)
+	}
 
 	return normalizeConfig(raw)
+}
+
+func migrateLegacyFiles(path string) (*Config, error) {
+	directory := filepath.Dir(path)
+	favPath := filepath.Join(directory, "fav.json")
+	favoritesPath := filepath.Join(directory, "favorites.json")
+	recentPath := filepath.Join(directory, "recent.json")
+
+	favData, err := os.ReadFile(favPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read legacy config %s: %w", favPath, err)
+	}
+
+	var raw rawConfig
+	if err := json.Unmarshal(favData, &raw); err != nil {
+		return nil, fmt.Errorf("parse legacy config %s: %w", favPath, err)
+	}
+	if raw.Commands == nil {
+		return nil, fmt.Errorf("parse legacy config %s: missing commands array", favPath)
+	}
+
+	raw.Favorites = nil
+	if favoritesData, readErr := os.ReadFile(favoritesPath); readErr == nil {
+		var favorites struct {
+			FavNames []string `json:"favNames"`
+		}
+		if err := json.Unmarshal(favoritesData, &favorites); err != nil {
+			return nil, fmt.Errorf("parse legacy favorites %s: %w", favoritesPath, err)
+		}
+		for _, name := range favorites.FavNames {
+			encoded, _ := json.Marshal(name)
+			raw.Favorites = append(raw.Favorites, encoded)
+		}
+	} else if !errors.Is(readErr, os.ErrNotExist) {
+		return nil, fmt.Errorf("read legacy favorites %s: %w", favoritesPath, readErr)
+	}
+
+	raw.Recent = nil
+	if recentData, readErr := os.ReadFile(recentPath); readErr == nil {
+		var recent []json.RawMessage
+		if err := json.Unmarshal(recentData, &recent); err != nil {
+			return nil, fmt.Errorf("parse legacy recent %s: %w", recentPath, err)
+		}
+		raw.Recent = recent
+	} else if !errors.Is(readErr, os.ErrNotExist) {
+		return nil, fmt.Errorf("read legacy recent %s: %w", recentPath, readErr)
+	}
+
+	cfg, err := normalizeConfig(raw)
+	if err != nil {
+		return nil, fmt.Errorf("migrate legacy config: %w", err)
+	}
+	if err := saveConfig(path, cfg); err != nil {
+		return nil, fmt.Errorf("write migrated config: %w", err)
+	}
+
+	_ = os.Remove(favPath)
+	_ = os.Remove(favoritesPath)
+	_ = os.Remove(recentPath)
+
+	return &cfg, nil
 }
 
 func normalizeConfig(raw rawConfig) (Config, error) {
@@ -195,18 +258,14 @@ func normalizeConfig(raw rawConfig) (Config, error) {
 }
 
 func saveConfig(path string, cfg Config) error {
+	normalized, err := normalizeConfig(configToRaw(cfg))
+	if err != nil {
+		return fmt.Errorf("validate config: %w", err)
+	}
+	cfg = normalized
+
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("create config directory: %w", err)
-	}
-
-	if cfg.Commands == nil {
-		cfg.Commands = []Command{}
-	}
-	if cfg.Favorites == nil {
-		cfg.Favorites = []int{}
-	}
-	if cfg.Recent == nil {
-		cfg.Recent = []RecentEntry{}
 	}
 
 	data, err := json.MarshalIndent(cfg, "", "  ")
@@ -298,6 +357,29 @@ func filterCommands(commands []Command, query string) []Command {
 	return filtered
 }
 
+func searchOrderedCommands(cfg Config) []Command {
+	ordered := orderedCommands(cfg)
+	byID := make(map[int]Command, len(ordered))
+	for _, command := range ordered {
+		byID[command.ID] = command
+	}
+
+	seen := make(map[int]bool, len(ordered))
+	result := make([]Command, 0, len(ordered))
+	for _, entry := range cfg.Recent {
+		if command, ok := byID[entry.ID]; ok && !seen[entry.ID] {
+			seen[entry.ID] = true
+			result = append(result, command)
+		}
+	}
+	for _, command := range ordered {
+		if !seen[command.ID] {
+			result = append(result, command)
+		}
+	}
+	return result
+}
+
 func matches(command Command, query string) bool {
 	if strings.Contains(strings.ToLower(command.Name), query) {
 		return true
@@ -380,4 +462,119 @@ func touchRecent(cfg *Config, commandID int, timestamp int64) {
 		recent = recent[:maxRecent]
 	}
 	cfg.Recent = recent
+}
+
+func configToRaw(cfg Config) rawConfig {
+	raw := rawConfig{
+		Commands: cfg.Commands,
+		NextID:   cfg.NextID,
+	}
+	for _, id := range cfg.Favorites {
+		encoded, _ := json.Marshal(id)
+		raw.Favorites = append(raw.Favorites, encoded)
+	}
+	for _, entry := range cfg.Recent {
+		encoded, _ := json.Marshal(entry)
+		raw.Recent = append(raw.Recent, encoded)
+	}
+	return raw
+}
+
+func findCommand(cfg Config, commandID int) *Command {
+	for index := range cfg.Commands {
+		if cfg.Commands[index].ID == commandID {
+			return &cfg.Commands[index]
+		}
+	}
+	return nil
+}
+
+func addCommand(cfg *Config, command Command) Command {
+	nextID := cfg.NextID
+	if nextID < 1 {
+		nextID = 1
+	}
+	for _, existing := range cfg.Commands {
+		if existing.ID >= nextID {
+			nextID = existing.ID + 1
+		}
+	}
+
+	command.ID = nextID
+	cfg.Commands = append(cfg.Commands, command)
+	cfg.NextID = nextID + 1
+	return command
+}
+
+func duplicateCommand(cfg *Config, source Command) (Command, bool) {
+	original := findCommand(*cfg, source.ID)
+	if original == nil {
+		return Command{}, false
+	}
+
+	copyCommand := *original
+	copyCommand.Name = uniqueCopyName(cfg.Commands, original.Name)
+	copyCommand.Tags = append([]string(nil), original.Tags...)
+	copyCommand.Aliases = append([]string(nil), original.Aliases...)
+
+	return addCommand(cfg, copyCommand), true
+}
+
+func uniqueCopyName(commands []Command, baseName string) string {
+	names := make(map[string]bool, len(commands))
+	for _, command := range commands {
+		names[command.Name] = true
+	}
+
+	candidate := baseName + " (Copy)"
+	copyNumber := 2
+	for names[candidate] {
+		candidate = fmt.Sprintf("%s (Copy %d)", baseName, copyNumber)
+		copyNumber++
+	}
+	return candidate
+}
+
+func updateCommand(cfg *Config, updated Command) bool {
+	for index := range cfg.Commands {
+		if cfg.Commands[index].ID == updated.ID {
+			cfg.Commands[index] = updated
+			return true
+		}
+	}
+	return false
+}
+
+func removeCommand(cfg *Config, commandID int) bool {
+	found := false
+	commands := make([]Command, 0, len(cfg.Commands))
+	for _, command := range cfg.Commands {
+		if command.ID == commandID {
+			found = true
+			continue
+		}
+		commands = append(commands, command)
+	}
+	if !found {
+		return false
+	}
+	cfg.Commands = commands
+
+	favorites := make([]int, 0, len(cfg.Favorites))
+	for _, id := range cfg.Favorites {
+		if id != commandID {
+			favorites = append(favorites, id)
+		}
+	}
+	cfg.Favorites = favorites
+
+	recent := make([]RecentEntry, 0, len(cfg.Recent))
+	for _, entry := range cfg.Recent {
+		if entry.ID != commandID {
+			recent = append(recent, entry)
+		}
+	}
+	cfg.Recent = recent
+
+	return true
 }

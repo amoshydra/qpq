@@ -238,7 +238,7 @@ pnpm run build
 
 ## Go prototype (experimental)
 
-A native Go + Bubble Tea prototype lives in [`go/`](go/README.md). It reads the same config file and currently supports the menu, favorites, recents, search, and command execution. Add/edit/delete forms and template prompts are not ported yet.
+A native Go + Bubble Tea prototype lives in [`go/`](go/README.md). It reads the same config file and mirrors the menu, favorites, recents, search, add/edit/delete/clone forms, template prompts, shell-history picker, and command execution.
 
 It is intended for evaluating a native replacement, especially on Termux. See [`go/README.md`](go/README.md) for Termux/Linux build and install instructions.
 

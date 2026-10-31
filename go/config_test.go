@@ -205,3 +205,72 @@ func TestHasPlaceholders(t *testing.T) {
 		t.Fatal("unexpected placeholder")
 	}
 }
+
+func TestMigrateLegacyFiles(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+
+	if err := os.WriteFile(filepath.Join(dir, "fav.json"), []byte(`{"commands":[{"name":"Alpha","command":"echo alpha"}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "favorites.json"), []byte(`{"favNames":["Alpha"]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "recent.json"), []byte(`[{"name":"Alpha","timestamp":123}]`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := loadConfig(path)
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	if len(cfg.Commands) != 1 || cfg.Commands[0].ID != 1 {
+		t.Fatalf("commands = %+v", cfg.Commands)
+	}
+	if len(cfg.Favorites) != 1 || cfg.Favorites[0] != 1 {
+		t.Fatalf("favorites = %v", cfg.Favorites)
+	}
+	if len(cfg.Recent) != 1 || cfg.Recent[0].ID != 1 || cfg.Recent[0].Timestamp != 123 {
+		t.Fatalf("recent = %+v", cfg.Recent)
+	}
+	for _, name := range []string{"fav.json", "favorites.json", "recent.json"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); !os.IsNotExist(err) {
+			t.Fatalf("expected %s to be removed", name)
+		}
+	}
+}
+
+func TestMigrationFailureKeepsLegacyFiles(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	legacyPath := filepath.Join(dir, "fav.json")
+	if err := os.WriteFile(legacyPath, []byte("not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := loadConfig(path); err == nil {
+		t.Fatal("expected migration error")
+	}
+	if _, err := os.Stat(legacyPath); err != nil {
+		t.Fatalf("legacy file should remain: %v", err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatal("config file should not be created on failed migration")
+	}
+}
+
+func TestSearchOrderPutsRecentFirst(t *testing.T) {
+	cfg := Config{
+		Commands: []Command{
+			{ID: 1, Name: "Alpha", Command: "echo alpha"},
+			{ID: 2, Name: "Beta", Command: "echo beta"},
+		},
+		Favorites: []int{2},
+		Recent:    []RecentEntry{{ID: 1, Timestamp: 100}},
+	}
+
+	ordered := searchOrderedCommands(cfg)
+	if ordered[0].ID != 1 || ordered[1].ID != 2 {
+		t.Fatalf("search order = %+v", ordered)
+	}
+}
