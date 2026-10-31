@@ -1,10 +1,11 @@
 import { Box, Text, useInput } from 'ink';
 import { useState } from 'react';
 import type { Command } from '../types/command.js';
+import { getDeleteConfirmationAction } from '../utils/inputActions.js';
 
 interface DeleteConfirmationProps {
   command: Command | null;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onCancel: () => void;
 }
 
@@ -12,19 +13,22 @@ export function DeleteConfirmation({ command, onConfirm, onCancel }: DeleteConfi
   const [isDeleting, setIsDeleting] = useState(false);
 
   useInput((input, key) => {
-    if (!command) return;
-
-    // Confirm deletion
-    if (key.return || input === 'y' || input === 'Y') {
-      setIsDeleting(true);
-      onConfirm();
+    if (!command) {
       return;
     }
 
-    // Cancel deletion
-    if (input === 'n' || input === 'N' || key.escape) {
+    const action = getDeleteConfirmationAction(input, key, isDeleting);
+
+    if (action === 'cancel') {
       onCancel();
       return;
+    }
+
+    if (action === 'confirm') {
+      setIsDeleting(true);
+      void onConfirm().catch(() => {
+        setIsDeleting(false);
+      });
     }
   });
 
@@ -34,20 +38,20 @@ export function DeleteConfirmation({ command, onConfirm, onCancel }: DeleteConfi
 
   return (
     <Box
-      borderStyle='round'
-      borderColor='yellow'
+      borderStyle="round"
+      borderColor="yellow"
       padding={1}
-      flexDirection='column'
+      flexDirection="column"
       gap={1}
     >
       <Box>
-        <Text color='yellow' bold>
+        <Text color="yellow" bold>
           Delete command: {command.name}
         </Text>
       </Box>
       <Box
-        borderStyle='round'
-        borderColor='gray'
+        borderStyle="round"
+        borderColor="gray"
         padding={1}
       >
         <Text>
@@ -55,11 +59,11 @@ export function DeleteConfirmation({ command, onConfirm, onCancel }: DeleteConfi
         </Text>
       </Box>
       <Box>
-        <Text color='white'>Are you sure? (Y/n)</Text>
+        <Text color="white">Are you sure? (Y/n)</Text>
       </Box>
       {isDeleting && (
         <Box>
-          <Text color='gray'>Deleting...</Text>
+          <Text color="gray">Deleting...</Text>
         </Box>
       )}
     </Box>

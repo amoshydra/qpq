@@ -15,16 +15,19 @@ pnpm install          # Install dependencies
 pnpm run dev          # Dev mode (auto-reload with tsx)
 pnpm run build        # Build for production
 pnpm run type-check   # TypeScript check
-pnpm run test         # Run tests
+pnpm run test         # Run tests in watch mode
+pnpm run test:run     # Run tests once
 pnpm start            # Run built app
 ```
 
-**Pre-push Hook:**
-A husky pre-commit hook runs `type-check`, `build`, and `test` before committing. The pre-push hook also runs these checks before pushing.
+`pnpm run dev` and `pnpm start` render the TUI only. Selected commands are printed but not executed; use `./qpq.sh` after a build to test the shell integration.
+
+**Hooks:**
+The husky pre-commit hook runs `type-check` and `test:run`. The pre-push hook runs `type-check`, `test:run`, and `build`.
 
 **Build Output:**
 - Built files are output to `dist/` directory
-- Wrapper script at `dist/qpq.sh` for shell integration
+- The repo-root `qpq.sh` wrapper resolves `dist/index.js`, evaluates the selected command, and propagates its exit status
 
 ## Code Style Guidelines
 
@@ -34,14 +37,14 @@ A husky pre-commit hook runs `type-check`, `build`, and `test` before committing
 src/
 ├── components/     # React components (PascalCase: CommandMenu.tsx)
 ├── utils/          # Utility functions (camelCase: loadConfig.ts)
-├── types/          # TypeScript types (Config.ts)
-└── data/           # Static data (JSON sample configs)
+├── types/          # TypeScript types (command.ts)
+└── test/           # Tests for repo-level scripts
 ```
 
 **Conventions:**
 - Components: PascalCase (e.g., `CommandItem.tsx`)
-- Utility files: camelCase with descriptive names (e.g., `loadFavorites.ts`)
-- Type files: PascalCase (e.g., `Command.ts`)
+- Utility files: camelCase with descriptive names (e.g., `configMutations.ts`)
+- Type files: camelCase (e.g., `command.ts`)
 - Test files: Same name as source with `.test` suffix (e.g., `config.test.ts`)
 
 ### Import Style
@@ -149,14 +152,19 @@ function getConfigDir(): string {
 - **macOS**: `~/Library/Application Support/qpq/config.json`
 - **Linux/Unix**: `~/.local/state/qpq/config.json`
 
+The config module is cross-platform. The `qpq.sh` launcher is POSIX-only (Linux/macOS).
+
 ## State Management
 
 - Use React's `useState` for local component state
 - Use `useEffect` for side effects and initialization
 - Use `useInput` from Ink for keyboard handling
+- For lists that can reorder (for example when toggling favorites), anchor selection to `command.id` instead of an array index
+- Guard single-letter shortcuts with `!key.ctrl`; Ink reports Ctrl+D as `input === 'd'` with `ctrl: true`
 
 ```typescript
-const [selectedIndex, setSelectedIndex] = useState(0);
+const [selectedId, setSelectedId] = useState<number | null>(null);
+const selectedIndex = getSelectedIndex(allCommands, selectedId);
 
 useInput((input, key) => {
   if (key.ctrl && input === 'c') {
@@ -164,11 +172,8 @@ useInput((input, key) => {
     return;
   }
 
-  if (key.return) {
-    if (allCommands.length > 0) {
-      onSelect(allCommands[selectedIndex]);
-    }
-    return;
+  if (key.return && allCommands.length > 0) {
+    onSelect(allCommands[selectedIndex]);
   }
 });
 ```
@@ -178,14 +183,17 @@ useInput((input, key) => {
 - Use `fs.promises` for async filesystem operations
 - Handle access errors with `fs.promises.access()` checks
 - Provide clear error messages with file paths
+- Write config files atomically (write a temporary file, then rename it)
 
 ```typescript
-async function initConfigFile(configPath: string): Promise<void> {
-  const samplePath = path.join(process.cwd(), 'src', 'data', 'sample-commands.json');
+async function writeConfigFile(configPath: string, config: Config): Promise<void> {
+  const temporaryPath = `${configPath}.${process.pid}.tmp`;
   try {
-    await fs.promises.copyFile(samplePath, configPath);
+    await fs.promises.writeFile(temporaryPath, JSON.stringify(config, null, 2), 'utf-8');
+    await fs.promises.rename(temporaryPath, configPath);
   } catch (error) {
-    throw new Error(`Failed to initialize config file: ${String(error)}`);
+    await fs.promises.rm(temporaryPath, { force: true }).catch(() => {});
+    throw new Error(`Failed to write config file at ${configPath}: ${String(error)}`);
   }
 }
 ```
@@ -198,9 +206,20 @@ async function initConfigFile(configPath: string): Promise<void> {
 - macOS: `~/Library/Application Support/qpq/config.json`
 - Windows: `%LocalAppData%\qpq\config.json`
 
+### Config Persistence
+
+Commands use stable numeric `id` values as their identity. Favorites and recent history reference those IDs, so mutations must preserve them:
+
+- Add/duplicate: append a command and advance `nextId`; leave `favorites` and `recent` untouched.
+- Edit: replace the command with the same ID; leave `favorites` and `recent` untouched.
+- Delete: remove the command ID from `commands`, `favorites`, and `recent` in one save.
+- Recent history: `saveRecent` moves an ID to the front without reordering the rest.
+
+Use `mutateConfig` or the pure helpers in `src/utils/configMutations.ts`; avoid loading and saving the config separately in a UI handler.
+
 ### Data Files
 
-- **Config file:** JSON format with `commands`, `favorites`, and `recent` array root
+- **Config file:** JSON with `commands`, `favorites`, `recent`, and `nextId`
 - **Sample file:** `src/utils/sample-commands.ts` - provides default commands (bundled at build time)
 
 **Sample command format:**
@@ -208,6 +227,7 @@ async function initConfigFile(configPath: string): Promise<void> {
 {
   "commands": [
     {
+      "id": 1,
       "name": "Git Status",
       "command": "git status",
       "description": "Show git status",
@@ -215,7 +235,8 @@ async function initConfigFile(configPath: string): Promise<void> {
     }
   ],
   "favorites": [],
-  "recent": []
+  "recent": [],
+  "nextId": 2
 }
 ```
 
@@ -223,23 +244,32 @@ async function initConfigFile(configPath: string): Promise<void> {
 
 - `ink` v6 - React for terminal UIs
 - `react` v19 - UI library
-- `fullscreen-ink` - Fullscreen terminal support
 - `ink-text-input` - Text input handling
+- `ink-scroll-list` - Scrolling command lists
 
 ### Application Modes
 
 - `menu` - Main command menu
-- `search` - Search mode (string search)
+- `search` - Search mode (substring search)
 - `template` - Template variable prompting
 - `add` - Add new command form
-- `delete` - Delete command confirmation
 - `edit_command` - Edit existing command form
+
+Delete confirmation is an overlay controlled by `showDeleteConfirm` / `deleteCommand` rather than a separate mode.
 
 ### Shell Integration
 
-The `qpq.sh` wrapper script captures shell history from environment variable.
+`qpq.sh` captures app stderr, receives the selected command through `QPQ_COMMAND_FILE` (falling back to the `__QEXEC__` stderr marker), evaluates it, and exits with the command's status. It resolves npm symlinks without relying on GNU `readlink -f`.
 
-**Important:** Commands from the current session won't appear if running `node dist/index.js` directly.
+History for the Add Command screen is read from the detected shell's history file, with a `history` subprocess fallback. Commands from the current session may not appear until the shell flushes its history file.
+
+## Testing
+
+- Put pure logic and key-routing tests in `src/utils/*.test.ts`.
+- Key routing lives in `src/utils/inputActions.ts`; `getMenuAction`, `getSearchAction`, etc. are pure and should be tested there rather than only through components.
+- Targeted component tests use the fake stdin/stdout harness in `src/test/ink.ts`. Assert visible text fragments and callback calls, not full ANSI snapshots.
+- Use `pnpm run test:run` in hooks and CI; `pnpm run test` is watch mode.
+- Keep a few PTY smoke tests for things the component harness cannot cover: fullscreen behavior, scrolling, and real command execution through `qpq.sh`.
 
 ---
 

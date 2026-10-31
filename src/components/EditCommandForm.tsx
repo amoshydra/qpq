@@ -15,7 +15,6 @@ export function EditCommandForm({ command, existingCommands, onSubmit, onCancel 
       existingCommands={existingCommands}
       onSubmit={onSubmit}
       onCancel={onCancel}
-      existingCommandName={command.name}
     />
   );
 }

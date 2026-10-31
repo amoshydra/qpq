@@ -1,6 +1,7 @@
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
+import { getFormNavigationAction } from '../utils/inputActions.js';
 import type { PlaceholderInfo } from '../utils/templates.js';
 
 interface TemplatePromptProps {
@@ -13,33 +14,34 @@ export function TemplatePrompt({ placeholders, onSubmit, onCancel }: TemplatePro
   const [currentIndex, setCurrentIndex] = useState(0);
   const [values, setValues] = useState<string[]>(new Array(placeholders.length).fill(''));
 
-  useInput((_, key) => {
-    if (key.escape) {
+  useInput((input, key) => {
+    const action = getFormNavigationAction(
+      input,
+      key,
+      currentIndex === placeholders.length - 1,
+    );
+
+    if (action === 'cancel') {
       onCancel();
       return;
     }
 
-    if (key.upArrow) {
+    if (action === 'previous') {
       setCurrentIndex(prev => (prev > 0 ? prev - 1 : placeholders.length - 1));
       return;
     }
 
-    if (key.downArrow) {
+    if (action === 'next') {
       setCurrentIndex(prev => (prev < placeholders.length - 1 ? prev + 1 : 0));
       return;
     }
 
-    if (key.return) {
-      if (currentIndex < placeholders.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      } else {
-        const result: Record<string, string> = {};
-        placeholders.forEach((p, i) => {
-          result[p.name] = values[i];
-        });
-        onSubmit(result);
-      }
-      return;
+    if (action === 'submit') {
+      const result: Record<string, string> = {};
+      placeholders.forEach((placeholder, index) => {
+        result[placeholder.name] = values[index];
+      });
+      onSubmit(result);
     }
   });
 
