@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0](https://github.com/amoshydra/qpq/compare/v0.2.8...v0.3.0) (2026-10-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* Node fallback removed; npm install now requires a successful native binary download; Windows npm install is unsupported.
+* qpq now runs the native Go binary by default, and `pnpm install` / `npm install` downloads a platform binary from GitHub Releases on first install. Windows npm installs remain unsupported, use the release .exe instead. Existing JSON config files remain compatible.
+* **go:** the native Go implementation is intended to replace the Node CLI. Installation moves from the npm/Node wrapper to native binaries, and runtime, packaging, and release artifacts differ from the existing qpq distribution. Existing JSON config files remain compatible. Building from source now requires Go 1.24+.
+
+### Features
+
+* **go:** add native Bubble Tea prototype ([2440990](https://github.com/amoshydra/qpq/commit/2440990503550d8912e6f602c1cd9416a391e67c))
+* **go:** complete native prototype parity ([c6ba62a](https://github.com/amoshydra/qpq/commit/c6ba62a2518071a76ff45c04bfafbbe7201fd754))
+* make native Go the default qpq runtime ([e588f76](https://github.com/amoshydra/qpq/commit/e588f769b5282456a6bb551200af4afc7037151f))
+* **npm:** install binaries from platform packages ([7031a3c](https://github.com/amoshydra/qpq/commit/7031a3ccefbc2adbdff94a5bf3209aa62868dad2))
+
+
+### Code Refactoring
+
+* remove Node runtime ([2f13a6b](https://github.com/amoshydra/qpq/commit/2f13a6b51ec634d3c67e753b21254ad4a6852d31))
+
 ## [0.2.8](https://github.com/amoshydra/qpq/compare/v0.2.7...v0.2.8) (2026-10-31)
 
 
