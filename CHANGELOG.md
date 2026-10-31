@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/amoshydra/qpq/compare/v0.2.8...v1.0.0) (2026-10-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **go:** the native Go implementation is intended to replace the Node CLI. Installation moves from the npm/Node wrapper to native binaries, and runtime, packaging, and release artifacts differ from the existing qpq distribution. Existing JSON config files remain compatible. Building from source now requires Go 1.24+.
+
+### Features
+
+* **go:** add native Bubble Tea prototype ([2440990](https://github.com/amoshydra/qpq/commit/2440990503550d8912e6f602c1cd9416a391e67c))
+* **go:** complete native prototype parity ([c6ba62a](https://github.com/amoshydra/qpq/commit/c6ba62a2518071a76ff45c04bfafbbe7201fd754))
+
 ## [0.2.8](https://github.com/amoshydra/qpq/compare/v0.2.7...v0.2.8) (2026-10-31)
 
 
