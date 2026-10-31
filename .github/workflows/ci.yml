@@ -72,3 +72,65 @@ jobs:
       - name: Prepare npm platform packages
         working-directory: .
         run: node scripts/publish-npm.mjs --prepare-only
+
+  npm12:
+    # npm 12 blocks dependency install scripts by default. qpq must install and
+    # run without approving any script, so exercise a real install here.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install npm 12
+        run: npm install --global npm@12
+
+      - name: Verify npm 12
+        run: test "$(npm --version | cut -d. -f1)" = "12"
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+
+      - name: Build native binaries
+        working-directory: go
+        run: make cross
+
+      - name: Stage npm packages
+        run: node scripts/publish-npm.mjs --prepare-only
+
+      - name: Pack release tarballs
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          npm pack ./build/npm-packages/qpq --pack-destination "$RUNNER_TEMP"
+          npm pack ./build/npm-packages/qpq-linux-x64 --pack-destination "$RUNNER_TEMP"
+
+      - name: Install locally and run
+        run: |
+          mkdir "$RUNNER_TEMP/local"
+          cd "$RUNNER_TEMP/local"
+          npm init --yes > /dev/null
+          install_output=$(npm install --omit=optional \
+            "$RUNNER_TEMP/qpq-$VERSION.tgz" \
+            "$RUNNER_TEMP/qpq-linux-x64-$VERSION.tgz" 2>&1)
+          printf '%s\n' "$install_output"
+          if printf '%s' "$install_output" | grep -q 'install-scripts'; then
+            echo "qpq must not rely on npm install scripts" >&2
+            exit 1
+          fi
+          test "$(./node_modules/.bin/qpq --version)" = "qpq $VERSION"
+
+      - name: Install globally and run
+        run: |
+          prefix="$RUNNER_TEMP/global"
+          npm install --global --prefix "$prefix" --omit=optional \
+            "$RUNNER_TEMP/qpq-$VERSION.tgz" \
+            "$RUNNER_TEMP/qpq-linux-x64-$VERSION.tgz"
+          test "$("$prefix/bin/qpq" --version)" = "qpq $VERSION"
