@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Test installer and launcher
+      - name: Test launcher
         run: pnpm test
 
       - name: Validate package

@@ -24,7 +24,7 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
-# Generated native binary from npm postinstall
+# Optional manual native binary location
 /bin/
 
 # npm staging output

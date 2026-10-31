@@ -14,7 +14,6 @@
   "scripts": {
     "test": "node --test",
     "prepare": "husky",
-    "postinstall": "node scripts/postinstall.mjs",
     "prepare:npm": "node scripts/publish-npm.mjs --prepare-only",
     "publish:npm": "node scripts/publish-npm.mjs",
     "bootstrap:platforms": "node scripts/publish-npm.mjs --bootstrap",
@@ -28,8 +27,7 @@
   ],
   "author": "",
   "files": [
-    "qpq.sh",
-    "scripts/postinstall.mjs"
+    "qpq.sh"
   ],
   "license": "MIT",
   "os": [
@@ -37,9 +35,6 @@
     "darwin",
     "android"
   ],
-  "engines": {
-    "node": ">=20"
-  },
   "devDependencies": {
     "husky": "^9.1.7",
     "publint": "^0.3.25"

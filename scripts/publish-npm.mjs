@@ -79,13 +79,9 @@ function topLevelPackageJson(version) {
     homepage: rootPackage.homepage,
     bin: rootPackage.bin,
     os: rootPackage.os,
-    engines: rootPackage.engines,
     license: rootPackage.license ?? 'MIT',
     keywords: rootPackage.keywords,
     files: rootPackage.files,
-    scripts: {
-      postinstall: 'node scripts/postinstall.mjs',
-    },
     optionalDependencies: Object.fromEntries(
       platformPackages.map(target => [target.name, version]),
     ),
@@ -114,10 +110,6 @@ function prepareReleasePackages() {
   const qpqDirectory = path.join(stagingRoot, rootPackage.name);
   writeJson(path.join(qpqDirectory, 'package.json'), topLevelPackageJson(rootPackage.version));
   copyFile(path.join(rootDirectory, 'qpq.sh'), path.join(qpqDirectory, 'qpq.sh'));
-  copyFile(
-    path.join(rootDirectory, 'scripts', 'postinstall.mjs'),
-    path.join(qpqDirectory, 'scripts', 'postinstall.mjs'),
-  );
   if (fs.existsSync(path.join(rootDirectory, 'README.md'))) {
     copyFile(path.join(rootDirectory, 'README.md'), path.join(qpqDirectory, 'README.md'));
   }

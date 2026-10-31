@@ -57,7 +57,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: pnpm install --frozen-lockfile
 
-      - name: Test installer and launcher
+      - name: Test launcher
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: pnpm test
 

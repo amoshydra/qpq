@@ -4,7 +4,7 @@ This file provides coding conventions and development guidelines for agentic cod
 
 ## Project Overview
 
-qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) and a postinstall resolver (`scripts/postinstall.mjs`) that copies the binary from the matching optional platform package.
+qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) that resolves the matching optional platform package at run time; it runs no install script.
 
 Do not reintroduce the previous TypeScript/Ink runtime. The final Node implementation is preserved at the `node-final` tag.
 
@@ -24,7 +24,7 @@ Installer/package tests:
 
 ```bash
 pnpm install
-pnpm test        # node:test launcher + postinstall tests
+pnpm test        # node:test launcher tests
 pnpm run lint:package
 ```
 
@@ -35,7 +35,7 @@ The husky pre-commit hook runs Node installer tests, `gofmt -l`, `go vet`, and `
 - `go/qpq` is the local binary (ignored)
 - `go/dist/qpq-*` are release binaries (ignored)
 - `qpq.sh` is the npm entry point
-- `bin/qpq-native` is created by npm postinstall (ignored)
+- `bin/qpq-native` is an optional manual install location (ignored)
 
 ## File Structure
 
@@ -49,13 +49,12 @@ go/                 # Native Go implementation
 ├── form.go         # Command form validation
 └── *_test.go       # Go tests
 
-scripts/            # npm installer tooling
-├── postinstall.mjs # Resolves/copies the matching optional platform package
+scripts/            # npm packaging tooling
 ├── publish-npm.mjs # Stages and publishes platform packages + qpq
-├── postinstall.test.mjs
+├── trust-platform-packages.sh
 └── wrapper.test.mjs
 
-qpq.sh              # npm bin: execs bin/qpq-native
+qpq.sh              # npm bin: resolves and execs the platform binary
 ```
 
 ## Go Style
@@ -105,11 +104,11 @@ qpq.sh              # npm bin: execs bin/qpq-native
 
 ## Release Workflow
 
-- `.github/workflows/ci.yml` runs installer tests and Go tests/builds.
+- `.github/workflows/ci.yml` runs launcher tests and Go tests/builds.
 - `.github/workflows/npm.yml` builds native binaries, creates `SHA256SUMS`, uploads release assets, then publishes the optional platform packages and top-level npm package.
 - Platform package names are `qpq-linux-x64`, `qpq-linux-arm64`, `qpq-linux-armv7`, `qpq-darwin-x64`, and `qpq-darwin-arm64`.
 - Linux platform packages declare `os: ["linux", "android"]` so Termux installs them. The top-level package includes `android` in `os`.
-- npm `postinstall` resolves the matching optional package and writes `bin/qpq-native`; it does not download from GitHub.
+- The npm package runs no install script. `qpq.sh` resolves the installed `qpq-<platform>` package at launch, so npm 12's default blocking of dependency install scripts does not break installs.
 - Windows users install the release `.exe` directly. ARMv6 Raspberry Pi users also use release binaries.
 
 ---

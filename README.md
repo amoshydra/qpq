@@ -34,7 +34,7 @@ A terminal-based command launcher for frequently used commands, built with Go an
 
 ## Installation
 
-The npm package installs the native Go binary for your platform through an optional npm package. Node.js 20+ is required only for the npm install step; `qpq` itself runs a native binary.
+The npm package installs the native Go binary for your platform through an optional npm package. No install script runs: `qpq` resolves the platform binary when it launches. Node.js is only involved because npm itself runs on it.
 
 ### Try instantly (no install)
 ```bash
@@ -257,21 +257,21 @@ make install PREFIX=/usr/local
 
 ### Installer tooling
 
-The npm package only contains `qpq.sh` and the postinstall resolver. To test those:
+The npm package only contains `qpq.sh`. To test it:
 
 ```bash
 pnpm install
-pnpm test                    # node:test installer and launcher tests
+pnpm test                    # node:test launcher tests
 pnpm run lint:package        # publint
 ```
 
-The npm postinstall resolves the matching platform package (`qpq-linux-arm64`, `qpq-darwin-arm64`, etc.) and copies its binary to `bin/qpq-native`. There is no GitHub download and no Node fallback. If the optional package cannot be resolved, npm installation fails; install a release binary manually in that case.
+The npm package depends on the five platform packages as optional dependencies. `qpq.sh` finds the matching one (`qpq-linux-arm64`, `qpq-darwin-arm64`, etc.) in `node_modules` and `exec`s its binary at launch. Nothing is downloaded during install, no install script runs, and there is no Node fallback. If no matching package is installed, `qpq` exits with a clear error; install a release binary manually in that case.
 
 ## FAQ
 
 ### Why qpq.sh wrapper?
 
-`qpq.sh` resolves the package's `bin/qpq-native` binary and `exec`s it. It exists because npm needs a stable cross-platform entry point while the actual executable is installed from the matching optional platform package during postinstall. If the native binary is missing, `qpq` exits with a clear error instead of falling back to a second implementation.
+`qpq.sh` locates the native binary and `exec`s it. npm needs a stable entry point, and the binary name differs per platform, so the launcher checks `QPQ_NATIVE_BIN`, then `bin/qpq-native`, then the sibling or nested `qpq-<platform>` package, then any installed `qpq-*` package. It runs no install script, so `npm install` keeps working on npm 12, where dependency install scripts are blocked by default. If the native binary is missing, `qpq` exits with a clear error instead of falling back to a second implementation.
 
 ### Why don't directory changes persist after running a command?
 
