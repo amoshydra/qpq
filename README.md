@@ -263,6 +263,8 @@ make build       # build ./qpq
 make cross       # build all release targets
 ```
 
+The Go suite includes PTY-level tests (`go/pty_test.go`) that drive the real binary through a pseudo-terminal on Linux and macOS. They are excluded on Windows.
+
 Source installs:
 
 ```bash

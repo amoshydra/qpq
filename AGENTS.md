@@ -96,7 +96,7 @@ qpq.sh              # npm bin: resolves and execs the platform binary
 - Add pure Go tests for config, ordering, search, forms, templates, and history parsing.
 - Add model tests for screen transitions and mutations.
 - Keep launcher and packaging tests in `scripts/*.test.mjs` using `node:test`.
-- For fullscreen behavior, history, and real command execution, a PTY smoke test (`expect`/`script`) is the right coverage. No PTY test is checked in yet.
+- Terminal-level tests live in `go/pty_test.go` (build tag `!windows`). They run the real binary in a PTY via `creack/pty`, answer the startup terminal queries the way a terminal would, send raw keystrokes, and cover menu startup, arrow navigation, search, template entry, command execution, and alternate-screen restore. When adding a key-driven test, wait for the screen that consumes each key before sending the next one; Bubble Tea can coalesce fast writes into one multi-rune key message.
 - Run:
   ```bash
   cd go && make check
