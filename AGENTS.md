@@ -4,13 +4,13 @@ This file provides coding conventions and development guidelines for agentic cod
 
 ## Project Overview
 
-qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) that resolves the matching optional platform package at run time; it runs no install script.
+qpq is a terminal command launcher written in Go with Bubble Tea. The native implementation lives in `go/` and is the only runtime. The npm package contains a small POSIX launcher (`qpq.sh`) that resolves the native binary at run time; it runs no install script and ships no postinstall file. Resolution order is `$QPQ_NATIVE_BIN`, `bin/qpq-native`, a sibling or nested `qpq-<platform>` package, then any installed `qpq-*` package.
 
 Do not reintroduce the previous TypeScript/Ink runtime. The final Node implementation is preserved at the `node-final` tag.
 
 ## Build & Development Commands
 
-Go is the primary implementation. The repository uses pnpm only for npm packaging and installer tests.
+Go is the primary implementation. The repository uses pnpm for npm packaging, launcher/packaging tests, publint, and the husky hooks.
 
 ```bash
 cd go
@@ -20,7 +20,7 @@ make cross       # build all release targets
 make install     # install to ~/.local/bin/qpq
 ```
 
-Installer/package tests:
+Launcher/package tests:
 
 ```bash
 pnpm install
@@ -29,11 +29,12 @@ pnpm run lint:package
 ```
 
 **Hooks:**
-The husky pre-commit hook runs Node installer tests, `gofmt -l`, `go vet`, and `go test`. The pre-push hook also runs `make build`.
+The husky pre-commit hook runs the Node launcher/packaging tests, `gofmt -l`, `go vet`, and `go test`. The pre-push hook also runs `make build`.
 
 **Build Output:**
 - `go/qpq` is the local binary (ignored)
 - `go/dist/qpq-*` are release binaries (ignored)
+- `build/npm-packages/` is staged npm output (ignored)
 - `qpq.sh` is the npm entry point
 - `bin/qpq-native` is an optional manual install location (ignored)
 
@@ -50,9 +51,10 @@ go/                 # Native Go implementation
 └── *_test.go       # Go tests
 
 scripts/            # npm packaging tooling
-├── publish-npm.mjs # Stages and publishes platform packages + qpq
+├── package.test.mjs # Root/staged package guard tests
+├── publish-npm.mjs  # Stages and publishes platform packages + qpq
 ├── trust-platform-packages.sh
-└── wrapper.test.mjs
+└── wrapper.test.mjs # Launcher resolution tests
 
 qpq.sh              # npm bin: resolves and execs the platform binary
 ```
@@ -82,19 +84,19 @@ qpq.sh              # npm bin: resolves and execs the platform binary
 
 ## TUI Behavior
 
-- Menu: favorites first in config order, then non-favorites by recency, then never-used commands alphabetically.
+- Menu: favorites first in command order, then non-favorites by recency, then never-used commands alphabetically.
 - Search: recent results first, then remaining commands. Match name, command text, description, tags, and aliases.
-- Key routing is implemented in `model.go` screen update methods. Keep guards for `Ctrl` combinations (especially `Ctrl+D`, which Bubble Tea reports as `ctrl+d`).
+- Key routing is implemented in `model.go` screen update methods. Text fields explicitly handle `Ctrl+U`; check how Bubble Tea stringifies other Ctrl combinations (for example `Ctrl+D` is `ctrl+d`) before adding new bindings.
 - Text fields support cursor movement, backspace, delete, home/end, spaces, and multi-rune input.
 - Template placeholders support `{name}` and `{name:index}`.
-- Command execution happens after Bubble Tea restores the terminal. Use the user's shell on POSIX and PowerShell on Windows.
+- Command execution happens after Bubble Tea restores the terminal. Use `$SHELL` when it is set and executable, otherwise `sh -c` on POSIX; use PowerShell on Windows.
 
 ## Testing
 
 - Add pure Go tests for config, ordering, search, forms, templates, and history parsing.
 - Add model tests for screen transitions and mutations.
-- Keep installer tests in `scripts/*.test.mjs` using `node:test`.
-- Use PTY smoke tests (`expect`/`script`) for fullscreen behavior, history, and real command execution.
+- Keep launcher and packaging tests in `scripts/*.test.mjs` using `node:test`.
+- For fullscreen behavior, history, and real command execution, a PTY smoke test (`expect`/`script`) is the right coverage. No PTY test is checked in yet.
 - Run:
   ```bash
   cd go && make check
@@ -104,11 +106,12 @@ qpq.sh              # npm bin: resolves and execs the platform binary
 
 ## Release Workflow
 
-- `.github/workflows/ci.yml` runs launcher tests and Go tests/builds.
-- `.github/workflows/npm.yml` builds native binaries, creates `SHA256SUMS`, uploads release assets, then publishes the optional platform packages and top-level npm package.
-- Platform package names are `qpq-linux-x64`, `qpq-linux-arm64`, `qpq-linux-armv7`, `qpq-darwin-x64`, and `qpq-darwin-arm64`.
-- Linux platform packages declare `os: ["linux", "android"]` so Termux installs them. The top-level package includes `android` in `os`.
-- The npm package runs no install script. `qpq.sh` resolves the installed `qpq-<platform>` package at launch, so npm 12's default blocking of dependency install scripts does not break installs.
+- `release-please` owns version bumps and `CHANGELOG.md` updates. `release-please-config.json` uses `bump-minor-pre-major: true`, and `.release-please-manifest.json` is the version baseline; do not edit the version by hand.
+- `.github/workflows/ci.yml` runs three jobs: `package` (launcher/packaging tests and publint), `go` (gofmt, vet, test, cross-build, and npm staging), and `npm12` (installs packed tarballs with npm 12 and runs `qpq --version`).
+- `.github/workflows/npm.yml` runs release-please, builds native binaries, creates `SHA256SUMS`, uploads release assets, then publishes the optional platform packages and top-level npm package through `scripts/publish-npm.mjs` with OIDC trusted publishing.
+- Platform package names are `qpq-linux-x64`, `qpq-linux-arm64`, `qpq-linux-armv7`, `qpq-darwin-x64`, and `qpq-darwin-arm64`. The `qpq-linux-x64` package contains the `qpq-linux-amd64` binary, and `qpq-android-arm64` is a copy of `qpq-linux-arm64`.
+- Linux platform packages declare `os: ["linux", "android"]` so Termux installs them. The top-level package includes `android` in `os` and excludes `win32`.
+- The npm package runs no install script or postinstall step. `qpq.sh` resolves the installed `qpq-<platform>` package at launch, so npm 12's default blocking of dependency install scripts does not break installs.
 - Windows users install the release `.exe` directly. ARMv6 Raspberry Pi users also use release binaries.
 
 ---

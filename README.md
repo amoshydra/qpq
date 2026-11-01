@@ -14,14 +14,14 @@ A terminal-based command launcher for frequently used commands, built with Go an
 
 ## Features
 
-- **Menu Mode**: Command list sorted with favorites first, then by recency
+- **Menu Mode**: One command list with favorites first, then other commands by recency
 - **Favorites**: Pin frequently used commands at the top (press `f` to toggle)
-- **All Commands**: Sorted by recency - recently used commands appear first
+- **Recency Sorting**: Among non-favorites, recently used commands appear first and never-used commands fall to the bottom alphabetically
 - **Direct Actions**: Add, edit, clone, or delete commands directly from the menu
 - **Search Mode**: Real-time substring search across names, commands, descriptions, tags, and aliases
 - **Template Support**: Command placeholders that prompt for values
 - **Cross-platform Config**: Uses the right config directory on Linux, macOS, and Windows
-- **Native Runtime**: Ships a static Go binary for Linux, macOS, Termux, and Raspberry Pi
+- **Native Runtime**: Ships a static Go binary for Linux, macOS, Windows, Termux, and Raspberry Pi
 - **Auto-init**: Creates config directory and sample file if missing
 
 | **Menu Mode** | **Add from shell** |
@@ -34,7 +34,7 @@ A terminal-based command launcher for frequently used commands, built with Go an
 
 ## Installation
 
-The npm package installs the native Go binary for your platform through an optional npm package. No install script runs: `qpq` resolves the platform binary when it launches. Node.js is only involved because npm itself runs on it.
+The npm package installs the native Go binary for your platform through optional platform packages. No install script runs: `qpq` resolves the platform binary when it launches. Node.js is only involved because npm itself runs on it.
 
 ### Try instantly (no install)
 ```bash
@@ -54,7 +54,7 @@ npm i -g qpq
 qpq
 ```
 
-npm installs the ARM64 platform package automatically for Android/Termux. Alternatively, download `qpq-android-arm64` from the latest GitHub release and install it as `qpq`:
+npm installs the matching Linux/Android platform package automatically (the ARM64 package on current Termux devices). Alternatively, download `qpq-android-arm64` from the latest GitHub release and install it as `qpq`:
 
 ```bash
 curl -LO https://github.com/amoshydra/qpq/releases/latest/download/qpq-android-arm64
@@ -72,7 +72,7 @@ Download the matching release binary:
 
 ### Windows
 
-The npm launcher is a POSIX shell script, so npm installation is not supported end-to-end on Windows. Download `qpq-windows-amd64.exe` from the latest GitHub release instead.
+The npm package supports Linux, macOS, and Android only, and its launcher is a POSIX shell script. On Windows, download `qpq-windows-amd64.exe` from the latest GitHub release instead.
 
 ## Usage
 
@@ -94,7 +94,7 @@ qpq --paths      # Show configuration paths
 
 | Key | Action |
 |-----|--------|
-| ↓↑ | Navigate commands |
+| ↑/↓ or k/j | Navigate commands |
 | Enter / 1-9 | Select command |
 | f | Toggle favorite on selected command |
 | a | Add new command |
@@ -102,24 +102,25 @@ qpq --paths      # Show configuration paths
 | e | Edit selected command |
 | c | Clone selected command |
 | / | Switch to search mode |
-| Escape / Ctrl+C | Quit |
+| q / Escape / Ctrl+C | Quit |
 
 #### Search Mode
 
 | Key | Action |
 |-----|--------|
 | Type | Search query |
-| ↓↑ | Navigate results |
+| ↑/↓ | Navigate results |
 | Enter | Select command |
 | Escape | Return to menu |
-| Backspace | Delete character |
+| Backspace / Delete | Delete last character |
+| Ctrl+U | Clear search query |
 | Ctrl+C | Quit |
 
 #### Add Command - History Selection
 
 | Key | Action |
 |-----|--------|
-| ↓↑ | Navigate history |
+| ↑/↓ or k/j | Navigate history |
 | Enter | Select command from history |
 | n | Skip to new command form |
 | Escape | Cancel |
@@ -130,6 +131,9 @@ qpq --paths      # Show configuration paths
 |-----|--------|
 | Type | Enter text in current field |
 | ↑/↓ | Navigate fields |
+| ←/→, Home/End | Move cursor |
+| Backspace / Delete | Delete character |
+| Ctrl+U | Clear current field |
 | Enter | Next field or submit (if last) |
 | Escape | Cancel |
 
@@ -138,9 +142,11 @@ qpq --paths      # Show configuration paths
 | Key | Action |
 |-----|--------|
 | Type | Enter value for current field |
-| ↓↑ | Navigate between fields |
+| ↑/↓ | Navigate between fields |
 | Enter | Next field or submit (if last) |
 | Escape | Cancel |
+
+Template fields support the same cursor and editing keys as the command form.
 
 #### Delete Confirmation
 
@@ -156,13 +162,13 @@ Default config location:
 - macOS: `~/Library/Application Support/qpq/config.json`
 - Windows: `%LocalAppData%\qpq\config.json`
 
-The config file stores commands, favorites, and recent history in a single JSON file.
+The config file stores commands, favorites, recent history, and the next command ID in a single JSON file.
 
 ### Menu Display
 
 The menu shows commands in this order:
-1. **Favorites** - Pinned commands (appear first, never sorted by recency)
-2. **All Commands** - All other commands sorted by when they were last used
+1. **Favorites** - Pinned commands first, in command definition order
+2. **Other commands** - Sorted by when they were last used
    - Recently used commands appear first
    - Commands never used appear at the bottom alphabetically
 
@@ -183,7 +189,7 @@ The menu shows commands in this order:
 4. Use `↑/↓` to navigate between fields
 5. Press `Enter` on the Tags field to submit
 
-**Note**: If you change the command name, favorites and recent usage are automatically updated.
+**Note**: Favorites and recent history store command IDs, so renaming a command keeps its favorite and recency state. The edit form preserves existing aliases; edit the config file directly to change them.
 
 ### Deleting Commands
 
@@ -198,20 +204,30 @@ The menu shows commands in this order:
 {
   "commands": [
     {
+      "id": 1,
       "name": "Git Push",
       "command": "git push origin {branch}",
       "description": "Push to remote branch",
-      "tags": ["git"]
+      "tags": ["git"],
+      "aliases": ["gp"]
     }
   ],
-  "favorites": [],
-  "recent": []
+  "favorites": [1],
+  "recent": [
+    {
+      "id": 1,
+      "timestamp": 1760000000000
+    }
+  ],
+  "nextId": 2
 }
 ```
 
+`favorites` and `recent` reference command IDs, and recent entries also carry an epoch-millisecond timestamp. `nextId` is the ID assigned to the next new command. `aliases` are optional searchable names; the edit form preserves them but does not expose an alias field.
+
 ### Templates
 
-Use `{placeholder}` syntax for dynamic values:
+Use `{placeholder}` syntax for dynamic values. Placeholder names can contain letters, digits, and underscores:
 ```json
 {
   "name": "Git Push",
@@ -255,27 +271,27 @@ make install                 # ~/.local/bin/qpq
 make install PREFIX=/usr/local
 ```
 
-### Installer tooling
+### Launcher and packaging
 
-The npm package only contains `qpq.sh`. To test it:
+The top-level npm package ships the `qpq.sh` launcher. To test the launcher and packaging:
 
 ```bash
 pnpm install
-pnpm test                    # node:test launcher tests
+pnpm test                    # node:test launcher and packaging tests
 pnpm run lint:package        # publint
 ```
 
-The npm package depends on the five platform packages as optional dependencies. `qpq.sh` finds the matching one (`qpq-linux-arm64`, `qpq-darwin-arm64`, etc.) in `node_modules` and `exec`s its binary at launch. Nothing is downloaded during install, no install script runs, and there is no Node fallback. If no matching package is installed, `qpq` exits with a clear error; install a release binary manually in that case.
+When published, the package declares the five platform packages (`qpq-linux-x64`, `qpq-linux-arm64`, `qpq-linux-armv7`, `qpq-darwin-x64`, and `qpq-darwin-arm64`) as optional dependencies; `scripts/publish-npm.mjs` adds them while staging. `qpq.sh` finds the matching one as a sibling package or under a nested `node_modules`, falls back to any installed `qpq-*` package, then `exec`s its binary at launch. No binary is fetched from GitHub during install; npm installs the matching platform package from the registry. No install script runs, and there is no Node fallback. If no platform package is installed, `qpq` exits with a clear error; install a release binary manually in that case.
 
 ## FAQ
 
-### Why qpq.sh wrapper?
+### Why does qpq need a launcher script?
 
 `qpq.sh` locates the native binary and `exec`s it. npm needs a stable entry point, and the binary name differs per platform, so the launcher checks `QPQ_NATIVE_BIN`, then `bin/qpq-native`, then the sibling or nested `qpq-<platform>` package, then any installed `qpq-*` package. It runs no install script, so `npm install` keeps working on npm 12, where dependency install scripts are blocked by default. If the native binary is missing, `qpq` exits with a clear error instead of falling back to a second implementation.
 
 ### Why don't directory changes persist after running a command?
 
-When you select a command from qpq, the wrapper evaluates it in a child shell. Commands like `cd`, `export`, and `alias` run, but their effects disappear when that shell exits. **Environment changes won't persist** - you'll return to the original directory and environment.
+When you select a command from qpq, qpq evaluates the selected command in a child shell. Commands like `cd`, `export`, and `alias` run, but their effects disappear when that shell exits. **Environment changes won't persist** - you'll return to the original directory and environment.
 
 **Workaround**: Append `$SHELL` to keep a new shell open:
 
@@ -304,14 +320,12 @@ qpq reads the history file for the detected shell:
 - fish: `~/.local/share/fish/fish_history`
 - PowerShell: the PSReadLine history file
 
-It also tries the shell's `history` builtin as a fallback. Entries from the current session may not appear until your shell flushes them to disk; for example, zsh users with `INC_APPEND_HISTORY` or `SHARE_HISTORY` will see them immediately.
+It also queries the shell's history command as a fallback. Entries from the current session may not appear until your shell flushes them to disk; for example, zsh users with `INC_APPEND_HISTORY` or `SHARE_HISTORY` will see them immediately.
 
 ## Error Handling
 
-If the config file is corrupted, the app will show:
+If the config file is corrupted, qpq prints the parse error and the config file path, then exits. Fix or remove the file manually; qpq does not automatically repair or overwrite a corrupted config.
 
-1. Full error message
-2. File location
-3. Instructions to fix manually
+If a config mutation (add, edit, delete, clone, or favorite) cannot be saved, qpq shows an in-app Error screen with the failure message and returns to the menu after Enter or Escape. If saving recent history fails after you select a command, qpq prints a warning after the UI exits.
 
-Config writes are atomic, so a failed save does not leave a partially-written config behind. The app does not automatically repair or overwrite a corrupted config file.
+Config writes are atomic, so a failed save does not leave a partially-written config behind.

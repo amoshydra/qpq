@@ -2,7 +2,7 @@
 
 The native Go + Bubble Tea implementation of qpq.
 
-It reads the **same config file** as the previous Node version, so existing commands, favorites, and recents carry over without migration.
+It reads the **same config file** and config paths as the former Node implementation, so existing commands, favorites, and recents carry over. On first launch it can also migrate the older split `fav.json`, `favorites.json`, and `recent.json` files.
 
 ## Status
 
@@ -41,7 +41,7 @@ mkdir -p "$HOME/.local/bin"
 cp qpq-linux-amd64 "$HOME/.local/bin/qpq"
 ```
 
-Release assets are built by the `Release to NPM` workflow and attached to the GitHub release:
+Release assets are built by the `Release to NPM` workflow, checksummed in `SHA256SUMS`, and attached to the GitHub release:
 
 - `qpq-android-arm64` — Termux / 64-bit Android
 - `qpq-linux-amd64` — Linux x86_64
@@ -108,7 +108,7 @@ cd go
 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o qpq .
 ```
 
-The resulting binary is statically linked and has no runtime dependencies.
+The resulting binary is statically linked and has no runtime dependencies. A raw `go build` reports `qpq dev` for `--version`; `make build` injects the version from `package.json`.
 
 ## Cross-compile
 
@@ -147,13 +147,13 @@ If a prebuilt static binary does not run on your Android/Termux setup, build it 
 
 ## Configuration
 
-It uses the same configuration paths as the previous Node app:
+It uses the same configuration paths as the former Node implementation:
 
 - Linux/Termux: `~/.local/state/qpq/config.json`
 - macOS: `~/Library/Application Support/qpq/config.json`
 - Windows: `%LocalAppData%\qpq\config.json`
 
-Use `qpq --paths` to print the exact path. If the file does not exist, a small default config is created.
+Use `qpq --paths` to print the exact path. If the file does not exist, a default config with sample commands is created.
 
 ## Keys
 
@@ -170,7 +170,7 @@ Use `qpq --paths` to print the exact path. If the file does not exist, a small d
 | `Esc` / `q` | Quit |
 | `Ctrl+C` | Quit |
 
-In search mode, `Esc` returns to the menu and `Enter` runs the selected result.
+In search mode, `Esc` returns to the menu, `Enter` runs the selected result, `Ctrl+U` clears the query, and `q` is typed into the query instead of quitting. The command form and template prompt also support `←`/`→`, `Home`/`End`, `Delete`, and `Ctrl+U` to clear the field.
 
 ## Measured
 
@@ -179,4 +179,4 @@ In search mode, `Esc` returns to the menu and `Enter` runs the selected result.
 | Linux x86_64 | ~2ms | ~5.5MB | ~4.2MB |
 | Termux aarch64 | 45–52ms | 7.9MB | ~4.2MB |
 
-For comparison, the Node version on the same Termux device measured ~1.0s startup and ~108MB RSS. The native implementation is roughly 20× faster to start and 14× smaller in memory.
+For comparison, the former Node implementation on the same Termux device measured ~1.0s startup and ~108MB RSS. The native implementation is roughly 20× faster to start and 14× smaller in memory.
