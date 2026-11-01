@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/amoshydra/qpq.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/stars/amoshydra/qpq.svg)](https://github.com/amoshydra/qpq)
 
-A terminal-based command launcher for frequently used commands, built with Go and Bubble Tea.
+A terminal-based command launcher for frequently used commands, built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
 ## Features
 
@@ -18,13 +18,14 @@ A terminal-based command launcher for frequently used commands, built with Go an
 - **Native Runtime**: Ships a static Go binary for Linux, macOS, Windows, Termux, and Raspberry Pi
 - **Auto-init**: Creates config directory and sample file if missing
 
-| **Menu Mode** | **Add from shell history** |
-| :-: | :-: |
-| ![Menu](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/menu.svg) | ![Add from shell history](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/add-history.svg) |
-| **Edit mode** | **Favorites** |
-| ![Edit](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/edit.svg) | ![Favorites](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/favorites.svg) |
-| **Search** | **Template variables** |
-| ![Search](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/search.svg) | ![Template variables](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/template.svg) |
+| Screen | Feature |
+| :-- | :-- |
+| ![Menu](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/menu.svg)                           | Menu Mode
+| ![Add from shell history](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/add-history.svg)  | Add from shell history
+| ![Edit](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/edit.svg)                           | Edit mode
+| ![Favorites](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/favorites.svg)                 | Favorites
+| ![Search](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/search.svg)                       | Search
+| ![Template variables](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/template.svg)         | Template variables
 
 ## Installation
 
