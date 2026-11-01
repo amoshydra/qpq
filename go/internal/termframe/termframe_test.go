@@ -63,6 +63,30 @@ func TestParseStyles(t *testing.T) {
 	}
 }
 
+func TestParseAlternateScreen(t *testing.T) {
+	frame := Parse([]byte("main\r\n\x1b[?1049hALT\x1b[?1049lout"), 10, 4)
+
+	if got, want := frame.Text(), "main\nout"; got != want {
+		t.Fatalf("Text() = %q, want %q", got, want)
+	}
+}
+
+func TestParseCursorAndAlternateScreen(t *testing.T) {
+	frame := Parse([]byte("abc"), 5, 2)
+	row, column := frame.Cursor()
+	if row != 0 || column != 3 {
+		t.Errorf("Cursor() = (%d, %d), want (0, 3)", row, column)
+	}
+	if frame.Alternate() {
+		t.Error("frame is marked as the alternate screen")
+	}
+
+	alternate := Parse([]byte("\x1b[?1049hx"), 5, 2)
+	if !alternate.Alternate() {
+		t.Error("frame is not marked as the alternate screen")
+	}
+}
+
 func TestParseScrolling(t *testing.T) {
 	frame := Parse([]byte("one\r\ntwo\r\nthree\r\nfour"), 8, 3)
 

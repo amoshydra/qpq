@@ -6,6 +6,12 @@
 
 A terminal-based command launcher for frequently used commands, built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
+<center>
+
+![qpq demo](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/demo.gif)
+
+</center>
+
 ## Features
 
 - **Menu Mode**: One command list with favorites first, then other commands by recency

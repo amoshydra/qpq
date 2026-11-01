@@ -69,6 +69,10 @@ type ptySession struct {
 }
 
 func startPTYSession(t *testing.T, home string, config Config) *ptySession {
+	return startPTYSessionSize(t, home, config, screenColumns, screenRows)
+}
+
+func startPTYSessionSize(t *testing.T, home string, config Config, columns, rows int) *ptySession {
 	t.Helper()
 	t.Setenv("HOME", home)
 
@@ -80,9 +84,14 @@ func startPTYSession(t *testing.T, home string, config Config) *ptySession {
 		t.Fatalf("save config: %v", err)
 	}
 
-	command := exec.Command(testBinary)
-	command.Dir = home
-	command.Env = environmentWith(map[string]string{
+	return startPTYCommand(t, home, []string{testBinary}, columns, rows, nil)
+}
+
+func startPTYCommand(t *testing.T, home string, args []string, columns, rows int, overrides map[string]string) *ptySession {
+	t.Helper()
+	t.Setenv("HOME", home)
+
+	environment := map[string]string{
 		"HOME":     home,
 		"SHELL":    "/bin/sh",
 		"TERM":     "xterm-256color",
@@ -90,9 +99,16 @@ func startPTYSession(t *testing.T, home string, config Config) *ptySession {
 		"CI":       "",
 		"NO_COLOR": "",
 		"CLICOLOR": "",
-	})
+	}
+	for key, value := range overrides {
+		environment[key] = value
+	}
 
-	master, err := pty.StartWithSize(command, &pty.Winsize{Rows: screenRows, Cols: screenColumns})
+	command := exec.Command(args[0], args[1:]...)
+	command.Dir = home
+	command.Env = environmentWith(environment)
+
+	master, err := pty.StartWithSize(command, &pty.Winsize{Rows: uint16(rows), Cols: uint16(columns)})
 	if err != nil {
 		t.Fatalf("start qpq in a pty: %v", err)
 	}

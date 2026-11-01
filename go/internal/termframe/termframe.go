@@ -33,6 +33,13 @@ type Frame struct {
 	columns int
 	rows    int
 	cells   [][]Cell
+
+	cursorRow    int
+	cursorColumn int
+
+	savedCells  [][]Cell
+	savedRow    int
+	savedColumn int
 }
 
 // New returns a blank frame.
@@ -169,6 +176,19 @@ func (f *Frame) parse(data []byte) {
 			index += size
 		}
 	}
+
+	f.cursorRow = clamp(row, 0, f.rows-1)
+	f.cursorColumn = clamp(column, 0, f.columns-1)
+}
+
+// Cursor reports the cursor position left by the recorded output.
+func (f *Frame) Cursor() (row, column int) {
+	return f.cursorRow, f.cursorColumn
+}
+
+// Alternate reports whether the recorded output ended on the alternate screen.
+func (f *Frame) Alternate() bool {
+	return f.savedCells != nil
 }
 
 func (f *Frame) escape(data []byte, row, column *int, style *Style, savedRow, savedColumn *int) int {
@@ -228,7 +248,13 @@ func (f *Frame) controlSequence(data []byte, row, column *int, style *Style, sav
 }
 
 func (f *Frame) apply(command byte, parameters string, row, column *int, style *Style, savedRow, savedColumn *int) {
-	if strings.HasPrefix(parameters, "?") || strings.HasPrefix(parameters, ">") {
+	if strings.HasPrefix(parameters, ">") {
+		return
+	}
+	if strings.HasPrefix(parameters, "?") {
+		if command == 'h' || command == 'l' {
+			f.applyPrivateMode(command, parameters[1:], row, column)
+		}
 		return
 	}
 
@@ -281,6 +307,44 @@ func (f *Frame) apply(command byte, parameters string, row, column *int, style *
 
 	*row = clamp(*row, 0, f.rows-1)
 	*column = clamp(*column, 0, f.columns-1)
+}
+
+func (f *Frame) applyPrivateMode(command byte, parameters string, row, column *int) {
+	for _, mode := range parseParameters(parameters) {
+		if mode != 47 && mode != 1047 && mode != 1049 {
+			continue
+		}
+		if command == 'h' {
+			f.enterAltScreen(row, column)
+		} else {
+			f.exitAltScreen(row, column)
+		}
+	}
+}
+
+func (f *Frame) enterAltScreen(row, column *int) {
+	if f.savedCells != nil {
+		return
+	}
+
+	f.savedCells = make([][]Cell, len(f.cells))
+	for index := range f.cells {
+		f.savedCells[index] = append([]Cell(nil), f.cells[index]...)
+	}
+	f.savedRow, f.savedColumn = *row, *column
+
+	f.clear()
+	*row, *column = 0, 0
+}
+
+func (f *Frame) exitAltScreen(row, column *int) {
+	if f.savedCells == nil {
+		return
+	}
+
+	f.cells = f.savedCells
+	f.savedCells = nil
+	*row, *column = f.savedRow, f.savedColumn
 }
 
 func (f *Frame) eraseDisplay(mode, row, column int) {
@@ -582,6 +646,17 @@ func escapeXML(value string) string {
 	)
 	return replacer.Replace(value)
 }
+
+// Palette returns the 16 ANSI colors used by SVG rendering.
+func Palette() []string {
+	return append([]string(nil), palette...)
+}
+
+// Background returns the default background color used by SVG rendering.
+func Background() string { return paletteBackground }
+
+// Foreground returns the default foreground color used by SVG rendering.
+func Foreground() string { return paletteForeground }
 
 const (
 	paletteBackground = "#101014"
