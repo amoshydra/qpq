@@ -1,0 +1,8 @@
+Search Commands
+> git█
+
+   1. Git Pull                     Pull from remote branch
+   2. Git Push                     Push to remote branch
+   3. Git Status                   Show git status
+
+↑↓: Navigate | Enter: Select | Escape: Menu | Ctrl+C: Quit

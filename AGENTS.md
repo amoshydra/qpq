@@ -48,6 +48,10 @@ go/                 # Native Go implementation
 ├── history.go      # Shell history file/subprocess capture
 ├── templates.go    # Placeholder extraction and filling
 ├── form.go         # Command form validation
+├── pty_test.go     # PTY-level tests (build tag !windows)
+├── screens_test.go # Screen scenarios, goldens, docs screenshots
+├── testdata/screens/*.golden
+├── internal/termframe/ # Terminal replay + SVG rendering
 └── *_test.go       # Go tests
 
 scripts/            # npm packaging tooling
@@ -97,6 +101,7 @@ qpq.sh              # npm bin: resolves and execs the platform binary
 - Add model tests for screen transitions and mutations.
 - Keep launcher and packaging tests in `scripts/*.test.mjs` using `node:test`.
 - Terminal-level tests live in `go/pty_test.go` (build tag `!windows`). They run the real binary in a PTY via `creack/pty`, answer the startup terminal queries the way a terminal would, send raw keystrokes, and cover menu startup, arrow navigation, search, template entry, command execution, and alternate-screen restore. When adding a key-driven test, wait for the screen that consumes each key before sending the next one; Bubble Tea can coalesce fast writes into one multi-rune key message.
+- Screen scenarios live in `go/screens_test.go`. They replay the real binary through `internal/termframe` and compare plain-text frames against `go/testdata/screens/*.golden`, so layout and content changes show up as reviewable diffs. The same scenarios generate `docs/screenshots/*.svg` for the README; never hand-edit those images. Refresh with `go test -run TestPTYScreens -update` (goldens) and `go test -run TestPTYScreens -update-screens` (screenshots).
 - Run:
   ```bash
   cd go && make check

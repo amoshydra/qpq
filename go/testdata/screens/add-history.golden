@@ -1,0 +1,12 @@
+Add Command - Shell History
+
+   1. cd ../termux
+   2. ls
+   3. clear
+   4. cd ~/Desktop
+   5. ssh root@192.168.0.1
+   6. echo
+   7. npm i -g qpq@latest
+   8. qpq
+
+↑↓: Navigate | Enter: Select | n: New command | Escape: Cancel

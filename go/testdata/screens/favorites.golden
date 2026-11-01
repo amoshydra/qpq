@@ -1,0 +1,13 @@
+My Commands
+
+*  1. List Files                   List all files with details
+*  2. Disk Usage                   Show disk usage
+   3. Docker Build                 Build Docker image with tag
+   4. Docker Run                   Run Docker container interactively
+   5. Git Pull                     Pull from remote branch
+   6. Git Push                     Push to remote branch
+   7. Git Status                   Show git status
+   8. NPM Install                  Install npm package
+   9. Show Path                    Show PATH environment variable
+
+↑↓: Navigate | Enter/1-9: Select | f: Favorite | a: Add | d: Delete | e: Edit | c: Clone | /: Search | Ctrl+C: Quit

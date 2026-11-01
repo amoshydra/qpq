@@ -1,0 +1,8 @@
+Edit Command
+
+Name:        List Files
+Command:     ls -la
+Description: List all files with details
+Tags:        files
+
+↑/↓ to navigate | Escape to cancel | Enter on last field to submit

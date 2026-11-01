@@ -6,12 +6,6 @@
 
 A terminal-based command launcher for frequently used commands, built with Go and Bubble Tea.
 
-<center>
-
-![output](https://github.com/user-attachments/assets/0d3bb1a6-77f9-4cfa-ab92-45a499dc7cd2)
-
-</center>
-
 ## Features
 
 - **Menu Mode**: One command list with favorites first, then other commands by recency
@@ -24,13 +18,13 @@ A terminal-based command launcher for frequently used commands, built with Go an
 - **Native Runtime**: Ships a static Go binary for Linux, macOS, Windows, Termux, and Raspberry Pi
 - **Auto-init**: Creates config directory and sample file if missing
 
-| **Menu Mode** | **Add from shell** |
-| :-:  | :-: |
-| ![readme-001-output](https://github.com/user-attachments/assets/21d6f8c6-052f-48b4-89b3-5352f72d94ca) | ![readme-002-add](https://github.com/user-attachments/assets/372d67b9-2591-41ca-8a0b-6a9a87f55161)
-| **Edit mode** | **Favorites**
-| ![readme-003-edit](https://github.com/user-attachments/assets/73bb8e8a-7c40-47f2-b2bc-a29425a2d9a3) | ![readme-004-favorite](https://github.com/user-attachments/assets/18aeb419-ac7f-4c43-acde-b7b5d716f99a) |
-
-
+| **Menu Mode** | **Add from shell history** |
+| :-: | :-: |
+| ![Menu](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/menu.svg) | ![Add from shell history](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/add-history.svg) |
+| **Edit mode** | **Favorites** |
+| ![Edit](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/edit.svg) | ![Favorites](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/favorites.svg) |
+| **Search** | **Template variables** |
+| ![Search](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/search.svg) | ![Template variables](https://raw.githubusercontent.com/amoshydra/qpq/main/docs/screenshots/template.svg) |
 
 ## Installation
 
@@ -264,6 +258,14 @@ make cross       # build all release targets
 ```
 
 The Go suite includes PTY-level tests (`go/pty_test.go`) that drive the real binary through a pseudo-terminal on Linux and macOS. They are excluded on Windows.
+
+Screen goldens live in `go/testdata/screens` and are asserted by `TestPTYScreens`. The README images are generated from the same scenarios. Refresh them with:
+
+```bash
+cd go
+go test -run TestPTYScreens -update          # rewrite golden frames
+go test -run TestPTYScreens -update-screens  # rewrite docs/screenshots/*.svg
+```
 
 Source installs:
 

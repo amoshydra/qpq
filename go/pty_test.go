@@ -83,13 +83,16 @@ func startPTYSession(t *testing.T, home string, config Config) *ptySession {
 	command := exec.Command(testBinary)
 	command.Dir = home
 	command.Env = environmentWith(map[string]string{
-		"HOME":  home,
-		"SHELL": "/bin/sh",
-		"TERM":  "xterm-256color",
-		"LANG":  "C.UTF-8",
+		"HOME":     home,
+		"SHELL":    "/bin/sh",
+		"TERM":     "xterm-256color",
+		"LANG":     "C.UTF-8",
+		"CI":       "",
+		"NO_COLOR": "",
+		"CLICOLOR": "",
 	})
 
-	master, err := pty.StartWithSize(command, &pty.Winsize{Rows: 24, Cols: 80})
+	master, err := pty.StartWithSize(command, &pty.Winsize{Rows: screenRows, Cols: screenColumns})
 	if err != nil {
 		t.Fatalf("start qpq in a pty: %v", err)
 	}

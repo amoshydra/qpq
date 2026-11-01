@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="511" height="168" viewBox="0 0 511 168" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14">
+<title>qpq search</title>
+<rect width="511" height="168" fill="#101014"/>
+<text x="12.0" y="26.0" fill="#56b6c2" font-weight="bold" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Search</text>
+<text x="70.8" y="26.0" fill="#56b6c2" font-weight="bold" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Commands</text>
+<text x="12.0" y="44.0" fill="#d5c4a1" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&gt;</text>
+<text x="28.8" y="44.0" fill="#d5c4a1" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">git█</text>
+<rect x="12.0" y="65.0" width="487.2" height="18.0" fill="#d5c4a1"/>
+<text x="37.2" y="80.0" fill="#101014" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">1.</text>
+<text x="62.4" y="80.0" fill="#101014" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Git</text>
+<text x="96.0" y="80.0" fill="#101014" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Pull</text>
+<text x="306.0" y="80.0" fill="#101014" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Pull</text>
+<text x="348.0" y="80.0" fill="#101014" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">from</text>
+<text x="390.0" y="80.0" fill="#101014" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">remote</text>
+<text x="448.8" y="80.0" fill="#101014" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">branch</text>
+<text x="37.2" y="98.0" fill="#d5c4a1" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">2.</text>
+<text x="62.4" y="98.0" fill="#d5c4a1" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Git</text>
+<text x="96.0" y="98.0" fill="#d5c4a1" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Push</text>
+<text x="306.0" y="98.0" fill="#d5c4a1" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Push</text>
+<text x="348.0" y="98.0" fill="#d5c4a1" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">to</text>
+<text x="373.2" y="98.0" fill="#d5c4a1" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">remote</text>
+<text x="432.0" y="98.0" fill="#d5c4a1" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">branch</text>
+<text x="37.2" y="116.0" fill="#d5c4a1" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">3.</text>
+<text x="62.4" y="116.0" fill="#d5c4a1" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Git</text>
+<text x="96.0" y="116.0" fill="#d5c4a1" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Status</text>
+<text x="306.0" y="116.0" fill="#d5c4a1" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Show</text>
+<text x="348.0" y="116.0" fill="#d5c4a1" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">git</text>
+<text x="381.6" y="116.0" fill="#d5c4a1" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">status</text>
+<text x="12.0" y="152.0" fill="#6c6c6c" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">↑↓:</text>
+<text x="45.6" y="152.0" fill="#6c6c6c" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Navigate</text>
+<text x="121.2" y="152.0" fill="#6c6c6c" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="138.0" y="152.0" fill="#6c6c6c" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Enter:</text>
+<text x="196.8" y="152.0" fill="#6c6c6c" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Select</text>
+<text x="255.6" y="152.0" fill="#6c6c6c" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="272.4" y="152.0" fill="#6c6c6c" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Escape:</text>
+<text x="339.6" y="152.0" fill="#6c6c6c" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Menu</text>
+<text x="381.6" y="152.0" fill="#6c6c6c" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="398.4" y="152.0" fill="#6c6c6c" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Ctrl+C:</text>
+<text x="465.6" y="152.0" fill="#6c6c6c" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Quit</text>
+</svg>
