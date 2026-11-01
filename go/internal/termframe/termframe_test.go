@@ -88,6 +88,15 @@ func TestSVG(t *testing.T) {
 	}
 }
 
+func TestSVGWithSize(t *testing.T) {
+	frame := Parse([]byte("hi"), 10, 3)
+	document := frame.SVGWithSize("test", 20, 5)
+
+	if !strings.Contains(document, `width="192" height="114"`) {
+		t.Errorf("SVGWithSize did not use the requested grid size\n%s", document)
+	}
+}
+
 func TestSVGEscapesText(t *testing.T) {
 	frame := Parse([]byte("a<b&c"), 8, 1)
 	document := frame.SVG("test")

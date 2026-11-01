@@ -409,7 +409,8 @@ func clamp(value, minimum, maximum int) int {
 	return value
 }
 
-func (f *Frame) usedRows() int {
+// UsedRows reports how many rows contain visible content.
+func (f *Frame) UsedRows() int {
 	for row := f.rows - 1; row >= 0; row-- {
 		for _, cell := range f.cells[row] {
 			if cell.Rune != ' ' {
@@ -420,7 +421,8 @@ func (f *Frame) usedRows() int {
 	return 0
 }
 
-func (f *Frame) usedColumns() int {
+// UsedColumns reports how many columns contain visible content.
+func (f *Frame) UsedColumns() int {
 	for column := f.columns - 1; column >= 0; column-- {
 		for row := 0; row < f.rows; row++ {
 			if f.cells[row][column].Rune != ' ' {
@@ -431,8 +433,14 @@ func (f *Frame) usedColumns() int {
 	return 0
 }
 
-// SVG renders the frame as a standalone SVG image.
+// SVG renders the frame as a standalone SVG image sized to its content.
 func (f *Frame) SVG(title string) string {
+	return f.SVGWithSize(title, f.UsedColumns(), f.UsedRows())
+}
+
+// SVGWithSize renders the frame as a standalone SVG image with a fixed
+// character grid size, so a set of screenshots can share dimensions.
+func (f *Frame) SVGWithSize(title string, columns, rows int) string {
 	const (
 		cellWidth  = 8.4
 		cellHeight = 18.0
@@ -440,13 +448,11 @@ func (f *Frame) SVG(title string) string {
 		fontSize   = 14.0
 	)
 
-	rows := f.usedRows()
-	if rows < 1 {
-		rows = 1
-	}
-	columns := f.usedColumns()
 	if columns < 1 {
 		columns = 1
+	}
+	if rows < 1 {
+		rows = 1
 	}
 
 	width := padding*2 + float64(columns)*cellWidth
@@ -460,7 +466,11 @@ func (f *Frame) SVG(title string) string {
 	fmt.Fprintf(&builder, `<rect width="%.0f" height="%.0f" fill="%s"/>`, width, height, paletteBackground)
 	builder.WriteString("\n")
 
-	for row := 0; row < rows; row++ {
+	drawRows := rows
+	if drawRows > f.rows {
+		drawRows = f.rows
+	}
+	for row := 0; row < drawRows; row++ {
 		baseline := padding + float64(row)*cellHeight + fontSize
 		f.writeBackgrounds(&builder, row, baseline, padding, cellWidth, cellHeight)
 		f.writeText(&builder, row, baseline, padding, cellWidth)

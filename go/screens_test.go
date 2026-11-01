@@ -113,6 +113,11 @@ func screenScenarios() []screenScenario {
 	}
 }
 
+type capturedScreen struct {
+	name  string
+	frame *termframe.Frame
+}
+
 func screenConfig(favorites []int) Config {
 	return Config{
 		Commands: []Command{
@@ -132,6 +137,8 @@ func screenConfig(favorites []int) Config {
 }
 
 func TestPTYScreens(t *testing.T) {
+	captured := make([]capturedScreen, 0, len(screenScenarios()))
+
 	for _, scenario := range screenScenarios() {
 		scenario := scenario
 		t.Run(scenario.name, func(t *testing.T) {
@@ -149,10 +156,7 @@ func TestPTYScreens(t *testing.T) {
 			}
 
 			frame := settledFrame(t, session)
-
-			if *updateScreens {
-				writeScreenshot(t, scenario.name, frame)
-			}
+			captured = append(captured, capturedScreen{name: scenario.name, frame: frame})
 			checkGolden(t, scenario.name, frame.Text())
 
 			for _, key := range scenario.exitKeys() {
@@ -163,6 +167,10 @@ func TestPTYScreens(t *testing.T) {
 				t.Fatalf("qpq exited with %v", err)
 			}
 		})
+	}
+
+	if *updateScreens {
+		writeScreenshots(t, captured)
 	}
 }
 
@@ -309,16 +317,32 @@ func firstDifference(want, got string) string {
 	return "frames differ"
 }
 
-func writeScreenshot(t *testing.T, name string, frame *termframe.Frame) {
+func writeScreenshots(t *testing.T, screens []capturedScreen) {
 	t.Helper()
+	if len(screens) == 0 {
+		return
+	}
+
+	columns, rows := 0, 0
+	for _, screen := range screens {
+		if used := screen.frame.UsedColumns(); used > columns {
+			columns = used
+		}
+		if used := screen.frame.UsedRows(); used > rows {
+			rows = used
+		}
+	}
 
 	directory := filepath.Join("..", "docs", "screenshots")
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		t.Fatalf("create screenshot directory: %v", err)
 	}
 
-	path := filepath.Join(directory, name+".svg")
-	if err := os.WriteFile(path, []byte(frame.SVG("qpq "+name)), 0o644); err != nil {
-		t.Fatalf("write screenshot %s: %v", path, err)
+	for _, screen := range screens {
+		path := filepath.Join(directory, screen.name+".svg")
+		document := screen.frame.SVGWithSize("qpq "+screen.name, columns, rows)
+		if err := os.WriteFile(path, []byte(document), 0o644); err != nil {
+			t.Fatalf("write screenshot %s: %v", path, err)
+		}
 	}
 }
